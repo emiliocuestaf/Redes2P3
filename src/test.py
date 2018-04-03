@@ -2,32 +2,36 @@ import servidorNombres
 
 server = servidorNombres.servidorNombres()
 
+print "Inicializamos puertos"
+
+server.inicializacionPuertos()
+
 print "Conectamos"
 
-socket = server.conectarSocket()
+server.conectarSocket()
 
 print "Solicitamos Username"
 
-server.solicitarUsername("Luisca", "cr7", socket)
+server.solicitarUsername("Luisca", "cr7")
 
 print "HAcemos la pirula"
 
-server.solicitarUsername("Luisca", "cr", socket)
+server.solicitarUsername("Luisca", "cr")
 
 print "Renovamos user"
 
-server.renovarUsername(socket)
+server.renovarUsername()
 
 print "A ver su ip"
 
-server.getIPUsuario("Luisca", socket)
+server.getIPUsuario("Luisca")
 
 print "Lista de usuarios"
 
-server.listarUsuarios(socket)
+server.listarUsuarios()
 
 print "Cerramos conexion"
 
-retorno = server.cerrarConexion(socket)
+retorno = server.cerrarConexion()
 
 print retorno

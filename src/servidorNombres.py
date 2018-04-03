@@ -1,39 +1,44 @@
 import socket
 
 class servidorNombres:
+	socketCliente = None
+	portCliente = None
+	portSD = None
+
+	# Devuelve el puerto del cliente
+
+	def inicializacionPuertos(self):
+		d = {}
+		try:
+			with open("client.conf", "r") as f:
+				for line in f:
+				    (key, val) = line.split()
+				    d[key] = val
+		except EnvironmentError:
+			return None
+		self.portSD = d['portSD']
+		self.portCliente = d['portCliente']
+		return
+
 
 	# Devuelve el socket creado
 
 	def conectarSocket(self):
-		puertoServidor = 8000
+		if (self.portSD == None):
+			return None
 		nombreSevidor = "vega.ii.uam.es"
-		socketCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		socketCliente.connect((nombreSevidor,puertoServidor))
-		return socketCliente
+		self.socketCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socketCliente.connect((nombreSevidor,int(self.portSD)))
+		return 
 
-	# Devuelve el puerto del cliente
-
-	def conseguirPuerto(self):
-		try:
-			with open("client.conf", "r") as f:
-				for line in f:
-				    port = line.split()[1]
-		except EnvironmentError:
-			return None
-
-		return port
-
-
-	def solicitarUsername(self, nick, pwd, socketCliente):
+	def solicitarUsername(self, nick, pwd):
 		ip_address = socket.gethostbyname(socket.getfqdn()) # Internet dice que pue fallar pero no se mu bien
-		port = self.conseguirPuerto()
-
-		if port == None:
+		if (self.portCliente == None):
 			return None
 
-		mensaje = "REGISTER "+nick+" "+ip_address+" "+port+" "+pwd+" "+" V1"
-		socketCliente.send(mensaje)
-		respuesta = socketCliente.recv(1024)
+		mensaje = "REGISTER "+nick+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
+		self.socketCliente.send(mensaje)
+		respuesta = self.socketCliente.recv(1024)
 
 		if respuesta == "NOK WRONG_PASS":
 			return None
@@ -48,7 +53,7 @@ class servidorNombres:
 
 	# lo haremos cada vez que un usuario se conecte automaticamente (sin introducir credenciales)
 	# obviamente, antes permitirle iniciar sesion automaticamente , si falla, al login
-	def renovarUsername(self,socketCliente):
+	def renovarUsername(self):
 		try:
 			d = {}
 			with open("authentication.dat", "r") as f:
@@ -61,33 +66,32 @@ class servidorNombres:
 		username = d['username']
 		pwd = d['pwd']
 		ip_address = socket.gethostbyname(socket.getfqdn())
-		port = self.conseguirPuerto()
 
-		if port == None:
+		if self.portCliente == None:
 			return None
 
-		mensaje = "REGISTER "+username+" "+ip_address+" "+port+" "+pwd+" "+" V1"
-		socketCliente.send(mensaje)
-		respuesta = socketCliente.recv(1024)
+		mensaje = "REGISTER "+username+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
+		self.socketCliente.send(mensaje)
+		respuesta = self.socketCliente.recv(1024)
 
 		if respuesta == "NOK WRONG_PASS":
 			return None
 
 		return "OK"
 
-	def getIPUsuario(self, username, socketCliente):
+	def getIPUsuario(self, username):
 		mensaje = "QUERY " + username
-		socketCliente.send(mensaje)
-		respuesta = socketCliente.recv(1024)
+		self.socketCliente.send(mensaje)
+		respuesta = self.socketCliente.recv(1024)
 
 		if respuesta == "NOK USER_UNKNOWN":
-			return None
+			return None	
 
 
-	def listarUsuarios(self, socketCliente):
+	def listarUsuarios(self):
 		mensaje = "LIST_USERS"
-		socketCliente.send(mensaje)
-		respuesta = socketCliente.recv(1024)
+		self.socketCliente.send(mensaje)
+		respuesta = self.socketCliente.recv(1024)
 
 
 		if respuesta == "NOK USER_UNKNOWN":
@@ -103,9 +107,9 @@ class servidorNombres:
 		# respuesta incluye: OK/NO, PUERTO AL QUE MANDAR VIDEO
 		# se inicia la transmision de video
 
-	def cerrarConexion(self, socketCliente):
+	def cerrarConexion(self):
 		mensaje = "QUIT"
-		socketCliente.send(mensaje)
-		respuesta = socketCliente.recv(1024)
-		socketCliente.close()
+		self.socketCliente.send(mensaje)
+		respuesta = self.socketCliente.recv(1024)
+		self.socketCliente.close()
 		return respuesta
