@@ -1,10 +1,11 @@
 import socket
+import time
 
 class servidorNombres:
 	socketCliente = None
 	portCliente = None
 	portSD = None
-
+	bufferLenght = 1024
 	# Devuelve el puerto del cliente
 
 	def inicializacionPuertos(self):
@@ -37,7 +38,7 @@ class servidorNombres:
 			return None
 
 		mensaje = "REGISTER "+nick+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
-		self.socketCliente.send(mensaje)
+		self.socketCliente.send(bytes(mensaje, 'utf-8'))
 		respuesta = self.socketCliente.recv(1024)
 
 		if respuesta == "NOK WRONG_PASS":
@@ -53,25 +54,15 @@ class servidorNombres:
 
 	# lo haremos cada vez que un usuario se conecte automaticamente (sin introducir credenciales)
 	# obviamente, antes permitirle iniciar sesion automaticamente , si falla, al login
-	def renovarUsername(self):
-		try:
-			d = {}
-			with open("authentication.dat", "r") as f:
-				# Guardamos todos los valores que haya en el fichero
-				for line in f:
-				    (key, val) = line.split()
-				    d[key] = val
-		except EnvironmentError:
-			return None
-		username = d['username']
-		pwd = d['pwd']
+	def renovarUsername(self, username, pwd):
+
 		ip_address = socket.gethostbyname(socket.getfqdn())
 
 		if self.portCliente == None:
 			return None
 
 		mensaje = "REGISTER "+username+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
-		self.socketCliente.send(mensaje)
+		self.socketCliente.send(bytes(mensaje, 'utf-8'))
 		respuesta = self.socketCliente.recv(1024)
 
 		if respuesta == "NOK WRONG_PASS":
@@ -81,24 +72,49 @@ class servidorNombres:
 
 	def getIPUsuario(self, username):
 		mensaje = "QUERY " + username
-		self.socketCliente.send(mensaje)
-		respuesta = self.socketCliente.recv(1024)
+		self.socketCliente.send(bytes(mensaje, 'utf-8'))
+		aux = self.socketCliente.recv(1024)
+
+		respuesta = aux.decode('utf-8')
 
 		if respuesta == "NOK USER_UNKNOWN":
-			return None	
+			return None
+
+		fields = respuesta.split(" ")
+		ip = fields[3]
+
+		return ip
 
 
 	def listarUsuarios(self):
 		mensaje = "LIST_USERS"
-		self.socketCliente.send(mensaje)
-		respuesta = self.socketCliente.recv(1024)
+		self.socketCliente.send(bytes(mensaje, 'utf-8'))
+		# esperamos este tiempo para asegurarnos de que llegan todos los bloques (?)
+		time.sleep(1)
+		aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
+		respuesta = aux
+		while len(aux) == self.bufferLenght:
+			aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
+			# + en strings equivale a concatenar
+			respuesta += aux
 
 
 		if respuesta == "NOK USER_UNKNOWN":
 			return None
 
+		userList = []
+		users = respuesta.split("#")
+		# el primer usuario no esta separado de los primeros mensajes (OK USERS_LIST)
+		# se le da un tratamiento distinto
+		fields = users[0].split(" ")
+		userList.append(fields[3])
+		
+		# no incluimos el ultimo
+		for user in users[1:-1]:
+			fields = user.split(" ")
+			userList.append(fields[0])
 
-		#return lista bien formateada (sera llamado desde la gui)
+		return userList
 
 	#def solicitarConexionUsuario(self, username, port):
 
@@ -109,7 +125,7 @@ class servidorNombres:
 
 	def cerrarConexion(self):
 		mensaje = "QUIT"
-		self.socketCliente.send(mensaje)
+		self.socketCliente.send(bytes(mensaje, 'utf-8'))
 		respuesta = self.socketCliente.recv(1024)
 		self.socketCliente.close()
 		return respuesta

@@ -2,11 +2,15 @@ from appJar import gui
 import tkinter
 import cv2
 from PIL import Image, ImageTk
+import servidorNombres
+import os
 
 class Gui:
 
 	authenticationFile = "authentication.dat"
 	videoFrame = []
+	server = servidorNombres.servidorNombres()
+	userList = []
 	# Construction, basic 
 	def __init__(self):
     	
@@ -17,7 +21,8 @@ class Gui:
 		self.app.setResizable(canResize=False)
 		self.username = None
 		self.pwd = None
-
+		self.server.inicializacionPuertos()
+		self.server.conectarSocket()
 
 	def startGUI(self):
 		try:
@@ -27,44 +32,50 @@ class Gui:
 
 
 	def loginFromFile(self): 
-		d = {}
-		# Abrimos el fichero de autenticacion, controlando excepciones
-		
-		with open(self.authenticationFile, "r") as f:
-			# Guardamos todos los valores que haya en el fichero
-			for line in f:
-			    (key, val) = line.split()
-			    d[key] = val
-
+		try:
+			d = {}
+			with open("authentication.dat", "r") as f:
+				# Guardamos todos los valores que haya en el fichero
+				for line in f:
+				    (key, val) = line.split()
+				    d[key] = val
+		except (EnvironmentError, ValueError):
+			raise EnvironmentError("No authentication file")
+			
 		username = d['username']
 		pwd = d['pwd']
-		state = True
-		# state = server.loginRequest(username, pwd)
-		if state == True:
-			self.setUsersLayout()
-			self.app.go()
 
+		state = self.server.renovarUsername(username, pwd)
+		if state == "OK":
+			self.setUsersLayout()
+			self.username = username
+			self.pwd = pwd
+			self.app.go()
 		else: 
 			self.setLoginLayout()
-			os.remove(authenticationFile)
+			os.remove(self.authenticationFile)
 
 	def login(self):
 		username = self.app.getEntry("Usuario:   ")
 		pwd = self.app.getEntry("Contraseña:   ")
-		state = True
-		# server.loginRequest(username , pwd)
-		if state == True:
-			with open(self.authenticationFile, "w") as f:
-			    f.write('username '+ username+'\n')
-			    f.write('pwd '+ pwd + '\n')
-
+		state = self.server.solicitarUsername(username , pwd)
+		if state == "OK":
 			self.username = username
 			self.pwd = pwd
 			self.setUsersLayout()
+		else:
+			self.app.errorBox("Error en login", "Intentelo de nuevo")
+
+	def setUsername(username):
+		self.username = username
+
+	def setPwd(pwd):
+		self.pwd = pwd
 
 	def logout(self):
 		self.username = None
 		self.pwd = None
+		os.remove(self.authenticationFile)
 		self.setLoginLayout()
 		
 	def loginButtons(self, btnName):
@@ -96,13 +107,15 @@ class Gui:
 
 	def actualizarUsuarios(self):
 		
-		# userList = server.getUsers()
-		userList = ['Platano', 'Pera', 'Uva', 'Jamon', 'Jesus', 'Zarzamora', 'Mora', 
-		'Manzana', 'Sidra', 'Ciruela', 'Caiman', 'Pasion', 'Caribu']
+		self.userList = self.server.listarUsuarios()
 
 		self.app.clearListBox("userList", callFunction=True)
 
-		for item in userList:
+		# nos eliminamos de la lista de usuarios a nosotros mismos para evitar problemas
+		if self.username != None:
+			self.userList.remove(self.username)
+
+		for item in self.userList:
 			self.app.addListItem("userList", item)
 
 
@@ -111,12 +124,10 @@ class Gui:
 	def buscarUsuarios(self):
 		search_term = self.app.getEntry("Search:")
 		# userList = server.getUsers()
-		userList = ['Platano', 'Pera', 'Uva', 'Jamon', 'Jesus', 'Zarzamora', 'Mora', 
-		'Manzana', 'Sidra', 'Ciruela', 'Caiman', 'Pasion', 'Caribu']
-
+		
 		self.app.clearListBox("userList", callFunction=True)
 
-		for item in userList:
+		for item in self.userList:
 			if search_term.lower() in item.lower():
 				self.app.addListItem("userList", item)
 
@@ -139,9 +150,15 @@ class Gui:
 		    self.logout()
 		elif btnName == "Llamar":
 			users = self.app.getListBox("userList")
-			self.app.errorBox("LLamada a " + users[0] + " fallida. Funcionalidad por implementar", "LLamada a " + users[0] + " fallida")
+			user = users[0]
+			if user != None:
+				ip = self.server.getIPUsuario(user)
+				if ip == None:
+					self.app.errorBox("ERROR", "AN ERROR OCURRED")
+				mensaje = "LLamada al usuario: {} con IP: {} fallida. Funcionalidad por implementar".format(user, ip)
+				self.app.errorBox("Not implemented yet", mensaje)
 		elif btnName == "Colgar":
-			self.app.errorBox("Funcionalidad colgar no implementada", "nope")
+			self.app.errorBox("Not implemented yet", "Funcionalidad colgar no implementada")
 
 
 	def setUsersLayout(self):
@@ -158,8 +175,9 @@ class Gui:
 		self.app.addLabelEntry("Search:", 1, 0)
 
 		# userList = server.getUsers()
-		userList = ['Platano', 'Pera', 'Uva', 'Jamon', 'Jesus', 'Zarzamora', 'Mora', 'Manzana', 'Sidra', 'Ciruela', 'Caiman', 'Pasion', 'Caribu']
-		self.app.addListBox("userList", userList,  2, 0)
+		self.actualizarUsuarios()
+
+		self.app.addListBox("userList", self.userList,  2, 0)
 
 		self.videoFrame = self.app.addImage("videoBox","callicon.png" , 0, 1, colspan = 3 , rowspan = 3)
 

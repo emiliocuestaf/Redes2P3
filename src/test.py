@@ -2,36 +2,36 @@ import servidorNombres
 
 server = servidorNombres.servidorNombres()
 
-print "Inicializamos puertos"
+print ("Inicializamos puertos")
 
 server.inicializacionPuertos()
 
-print "Conectamos"
+print ("Conectamos")
 
 server.conectarSocket()
 
-print "Solicitamos Username"
+print ("Solicitamos Username")
 
 server.solicitarUsername("Luisca", "cr7")
 
-print "HAcemos la pirula"
+print ("HAcemos la pirula")
 
 server.solicitarUsername("Luisca", "cr")
 
-print "Renovamos user"
+print ("Renovamos user")
 
 server.renovarUsername()
 
-print "A ver su ip"
+print ("A ver su ip")
 
 server.getIPUsuario("Luisca")
 
-print "Lista de usuarios"
+print ("Lista de usuarios")
 
 server.listarUsuarios()
 
-print "Cerramos conexion"
+print ("Cerramos conexion")
 
 retorno = server.cerrarConexion()
 
-print retorno
+print (retorno)
