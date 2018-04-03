@@ -39,7 +39,9 @@ class servidorNombres:
 
 		mensaje = "REGISTER "+nick+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
 		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		respuesta = self.socketCliente.recv(1024)
+		aux = self.socketCliente.recv(1024)
+
+		respuesta = aux.decode('utf-8')
 
 		if respuesta == "NOK WRONG_PASS":
 			return None
@@ -63,7 +65,9 @@ class servidorNombres:
 
 		mensaje = "REGISTER "+username+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
 		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		respuesta = self.socketCliente.recv(1024)
+		aux = self.socketCliente.recv(1024)
+
+		respuesta = aux.decode('utf-8')
 
 		if respuesta == "NOK WRONG_PASS":
 			return None
