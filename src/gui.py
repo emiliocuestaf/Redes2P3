@@ -26,7 +26,10 @@ class Gui:
 		self.pwd = None
 		self.server.inicializacionPuertos()
 		self.server.conectarSocket()
-		self.tvideo = tvideo.videoTransmision(self)
+		cap = cv2.VideoCapture(0)
+		self.tvideo = tvideo.videoTransmision(self, cap)
+
+		self.app.registerEvent(self.tvideo.transmisionWebCam)
 
 	def startGUI(self):
 		try:
@@ -56,8 +59,8 @@ class Gui:
 			self.pwd = pwd
 			self.app.go()
 		else: 
-			self.setLoginLayout()
 			os.remove(self.authenticationFile)
+			self.setLoginLayout()
 
 	def login(self):
 		username = self.app.getEntry("Usuario:   ")
@@ -155,14 +158,16 @@ class Gui:
 		elif btnName == "Llamar":
 			users = self.app.getListBox("userList")
 			user = users[0]
-			threading.Thread(self.tvideo.transmisionWebCam(None, None, None))	
+			
 			if user != None:
+				self.tvideo.doSendVideo(True)
 				ip = self.server.getIPUsuario(user)
 				if ip == None:
 					self.app.errorBox("ERROR", "AN ERROR OCURRED")
 				mensaje = "LLamada al usuario: {} con IP: {} fallida. Funcionalidad por implementar".format(user, ip)
 				self.app.errorBox("Not implemented yet", mensaje)
 		elif btnName == "Colgar":
+			self.tvideo.doSendVideo(False)
 			self.app.errorBox("Not implemented yet", "Funcionalidad colgar no implementada")
 
 
@@ -174,7 +179,7 @@ class Gui:
 		self.app.setStretch('Both')
 
 
-		self.app.addImage("logo", "logo.png" , 0,0, compound =None)
+		self.app.addImage("logo", "logo.png" , 0,0, compound = None)
 
 		self.app.addLabelEntry("Search:", 1, 0)
 
@@ -193,6 +198,9 @@ class Gui:
 
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
+		self.app.setPollTime(20) # ??
+		
+		
 		# Copypaste, may be useful cuando tengamos que controlar esas cosillas
 		#self.app.addStatusbar(fields=3)
 		#self.app.setStatusbar("FPS=",0)
