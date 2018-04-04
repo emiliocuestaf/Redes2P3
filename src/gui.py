@@ -14,7 +14,7 @@ class Gui:
 	# Construction, basic 
 	def __init__(self):
     	
-		self.app = gui("Login Window", "900x500")
+		self.app = gui("Login Window", "1000x500")
 		self.app.setTitle("Cyder VideoChat")
 		self.app.setIcon("logo.png")
 		self.app.setBg("OrangeRed")
@@ -116,7 +116,8 @@ class Gui:
 			self.userList.remove(self.username)
 
 		for item in self.userList:
-			self.app.addListItem("userList", item)
+			if item != "":
+				self.app.addListItem("userList", item)
 
 
 	# from : http://code.activestate.com/recipes/578860-setting-up-a-listbox-filter-in-tkinterpython-27/ 
@@ -133,7 +134,6 @@ class Gui:
 
 	def cambiarFrameVideo(self, frame):
 		self.app.setImageData("videoBox", frame, fmt = 'PhotoImage')
-
 
 	def notificacionLLamada(self, user, IP, Port):
 		# por implementar
@@ -171,18 +171,23 @@ class Gui:
 
 		self.app.addImage("logo", "logo.png" , 0,0, compound =None)
 
-		# userList = server.getUsers()
 		self.app.addLabelEntry("Search:", 1, 0)
-
-		# userList = server.getUsers()
-		self.actualizarUsuarios()
 
 		self.app.addListBox("userList", self.userList,  2, 0)
 
-		self.videoFrame = self.app.addImage("videoBox","callicon.png" , 0, 1, colspan = 3 , rowspan = 3)
+		userList = self.server.listarUsuarios()
+		self.actualizarUsuarios()
 
-		self.app.addButtons(["Search", "RefreshUsers", "Llamar", "Colgar", "Logout"], self.userButtons, 3, 0, colspan = 2)
+		self.videoFrame = self.app.addImage("videoBox","callicon.jpg" , 0, 1, rowspan = 3)
 
+		self.cameraCapture = self.app.addImage("cameraBox", "dandelions.jpg", 0, 2, rowspan = 3)
+
+		self.app.addButtons(["Search", "RefreshUsers"], self.userButtons, 3, 0)
+
+		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause"], self.userButtons, 3, 1)
+
+
+		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
 		# Copypaste, may be useful cuando tengamos que controlar esas cosillas
 		#self.app.addStatusbar(fields=3)
 		#self.app.setStatusbar("FPS=",0)
