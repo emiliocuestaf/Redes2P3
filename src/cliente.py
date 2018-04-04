@@ -1,5 +1,5 @@
 import gui as gui_file
-
+import transmisionVideo as transmision
 
 #def escucharLlamadas(port):
 #	while True:
@@ -8,5 +8,7 @@ import gui as gui_file
 
 
 gui = gui_file.Gui()
+
+#transmisionVideo = transmision.transmisionVideo(gui)
 
 gui.startGUI()
