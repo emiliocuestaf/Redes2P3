@@ -3,7 +3,9 @@ import tkinter
 import cv2
 from PIL import Image, ImageTk
 import servidorNombres
+import transmisionVideo as tvideo
 import os
+import threading
 
 class Gui:
 
@@ -11,6 +13,7 @@ class Gui:
 	videoFrame = []
 	server = servidorNombres.servidorNombres()
 	userList = []
+	tvideo = None
 	# Construction, basic 
 	def __init__(self):
     	
@@ -23,6 +26,7 @@ class Gui:
 		self.pwd = None
 		self.server.inicializacionPuertos()
 		self.server.conectarSocket()
+		self.tvideo = tvideo.videoTransmision(self)
 
 	def startGUI(self):
 		try:
@@ -151,6 +155,7 @@ class Gui:
 		elif btnName == "Llamar":
 			users = self.app.getListBox("userList")
 			user = users[0]
+			threading.Thread(self.tvideo.transmisionWebCam(None, None, None))	
 			if user != None:
 				ip = self.server.getIPUsuario(user)
 				if ip == None:

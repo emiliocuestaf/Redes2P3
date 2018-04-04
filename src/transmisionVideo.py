@@ -1,4 +1,5 @@
 import cv2
+from PIL import Image, ImageTk
 
 class videoTransmision:
 
@@ -13,7 +14,9 @@ class videoTransmision:
 		cap = cv2.VideoCapture(0)
 		while True:
 			ret, frame = cap.read()
-			self.gui.cambiarFrameVideo(frame)
+			cv2_im = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+			img_tk = ImageTk.PhotoImage(Image.fromarray(cv2_im))
+			self.gui.cambiarFrameVideo(img_tk)
 			# getFrameFrom...
 			# comunicacionP2P.enviarFrame()...
 
