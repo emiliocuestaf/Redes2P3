@@ -33,7 +33,7 @@ class servidorNombres:
 		return 
 
 	def solicitarUsername(self, nick, pwd):
-		ip_address = socket.gethostbyname(socket.getfqdn()) # Internet dice que pue fallar pero no se mu bien
+		ip_address = self.socketCliente.getsockname()[0] # Internet dice que pue fallar pero no se mu bien
 		if (self.portCliente == None):
 			return None
 
@@ -93,18 +93,22 @@ class servidorNombres:
 	def listarUsuarios(self):
 		mensaje = "LIST_USERS"
 		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		# esperamos este tiempo para asegurarnos de que llegan todos los bloques (?)
-		time.sleep(1)
+
+		# El contador sirve para asegurarnos de que leemos todos los usuarios
 		aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
 		respuesta = aux
-		while len(aux) == self.bufferLenght:
-			aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
-			# + en strings equivale a concatenar
-			respuesta += aux
-
-
 		if respuesta == "NOK USER_UNKNOWN":
 			return None
+
+
+		numusers = int(aux.split(" ")[2])
+
+		leidos = aux.count('#')
+		while leidos < numusers :
+
+			aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
+			leidos += aux.count('#')
+			respuesta += aux
 
 		userList = []
 		users = respuesta.split("#")
