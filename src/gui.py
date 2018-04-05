@@ -29,7 +29,6 @@ class Gui:
 		cap = cv2.VideoCapture(0)
 		self.tvideo = tvideo.videoTransmision(self, cap)
 
-		self.app.registerEvent(self.tvideo.transmisionWebCam)
 
 	def startGUI(self):
 		try:
@@ -65,6 +64,12 @@ class Gui:
 	def login(self):
 		username = self.app.getEntry("Usuario:   ")
 		pwd = self.app.getEntry("Contraseña:   ")
+		if username.count('#') != 0 :
+			self.app.errorBox("Error", "Su usuario no puede contener '#' ni otros caracetres extraños")
+			self.app.setEntry("Usuario:   ", "", callFunction=False)
+			self.app.setEntry("Contraseña:   ", "", callFunction=False)
+			return 
+
 		state = self.server.solicitarUsername(username , pwd)
 		if state == "OK":
 			self.username = username
@@ -142,10 +147,32 @@ class Gui:
 	def cambiarFrameVideo(self, frame):
 		self.app.setImageData("videoBox", frame, fmt = 'PhotoImage')
 
+	def cambiarFrameWebCam(self, frame):
+		self.app.setImageData("webCamBox", frame, fmt = 'PhotoImage')
+
 	def notificacionLLamada(self, user, IP, Port):
 		# por implementar
 		pass  
 
+	def llamar(self):
+		users = self.app.getListBox("userList")
+		
+		if users:
+			user = users[0]
+			if user != None:
+				ip = self.server.getIPUsuario(user)
+				if ip == None:
+					self.app.errorBox("ERROR", "A problem happened while trying to call {}".format(user))
+					return 
+				self.tvideo.doSendVideo(True)
+				mensaje = "LLamada al usuario: {} con IP: {} fallida. Funcionalidad por implementar".format(user, ip)
+				self.app.errorBox("Not implemented yet", mensaje)
+			else:
+				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
+		else:
+				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
+
+		
 
 	def userButtons(self, btnName):
 		if btnName == "Search":
@@ -156,16 +183,7 @@ class Gui:
 		elif btnName == "Logout":
 		    self.logout()
 		elif btnName == "Llamar":
-			users = self.app.getListBox("userList")
-			user = users[0]
-			
-			if user != None:
-				self.tvideo.doSendVideo(True)
-				ip = self.server.getIPUsuario(user)
-				if ip == None:
-					self.app.errorBox("ERROR", "AN ERROR OCURRED")
-				mensaje = "LLamada al usuario: {} con IP: {} fallida. Funcionalidad por implementar".format(user, ip)
-				self.app.errorBox("Not implemented yet", mensaje)
+			self.llamar()
 		elif btnName == "Colgar":
 			self.tvideo.doSendVideo(False)
 			self.app.errorBox("Not implemented yet", "Funcionalidad colgar no implementada")
@@ -185,12 +203,11 @@ class Gui:
 
 		self.app.addListBox("userList", self.userList,  2, 0)
 
-		userList = self.server.listarUsuarios()
 		self.actualizarUsuarios()
 
 		self.videoFrame = self.app.addImage("videoBox","callicon.jpg" , 0, 1, rowspan = 3)
 
-		self.cameraCapture = self.app.addImage("cameraBox", "dandelions.jpg", 0, 2, rowspan = 3)
+		self.cameraCapture = self.app.addImage("webCamBox", "dandelions.jpg", 0, 2, rowspan = 3)
 
 		self.app.addButtons(["Search", "RefreshUsers"], self.userButtons, 3, 0)
 
@@ -200,6 +217,7 @@ class Gui:
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
 		self.app.setPollTime(20) # ??
 		
+		self.app.registerEvent(self.tvideo.transmisionWebCam)
 		
 		# Copypaste, may be useful cuando tengamos que controlar esas cosillas
 		#self.app.addStatusbar(fields=3)

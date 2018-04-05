@@ -19,15 +19,16 @@ class videoTransmision:
 		if self.sendVideo:
 			
 			ret, frame = self.cap.read()
-			frame = cv2.resize(frame, (640,480))
+			frame = cv2.resize(frame, (200,300))
 			cv2_im = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 			img_tk = ImageTk.PhotoImage(Image.fromarray(cv2_im))
 			
-			self.gui.cambiarFrameVideo(img_tk)
+			self.gui.cambiarFrameWebCam(img_tk)
 
 		else:
 
-			self.gui.cambiarFrameVideo("callicon.png")
+			frame =  ImageTk.PhotoImage(Image.open("dandelions.jpg", "r")) 
+			self.gui.cambiarFrameWebCam(frame)
 
 
 			# getFrameFrom...
