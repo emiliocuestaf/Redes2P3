@@ -49,5 +49,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# Ejecutables de nuestro codigo
+# Ficheros locales
+*.dat
 
