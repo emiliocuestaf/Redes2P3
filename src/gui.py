@@ -1,33 +1,87 @@
 from appJar import gui
+from PIL import Image, ImageTk
+
 import tkinter
 import cv2
-from PIL import Image, ImageTk
-import servidorNombres
-import transmisionVideo as tvideo
 import os
 import threading
+import time
+import signal
+import sys
+
+# nuestros ficheros
+import servidorNombres
+import transmisionVideo as tvideo
 
 class Gui:
 
+	#files 
 	authenticationFile = "authentication.dat"
-	videoFrame = []
+	logo = "logo.gif"
+	videoBoxImage = "callicon.gif"
+	webCamBoxImage = "dandelions.gif"
+	
+	#configuracion de colores
+	bgColor = "Teal"
+	listColor = "LightCyan"
+
+
+	# modulos necesarios (inicializados en constructor)
 	server = servidorNombres.servidorNombres()
-	userList = []
 	tvideo = None
+
+	# widgets
+	userList = []
+
+	# webCam management
+
+	webCamEndEvent = None
+	webCamThread = None
+	
+
+	# videoDisplay management
+	videoDisplayThread = None
+	
+
+	# flag para saber si estamos en llamada o no
+	inCall = False
+
+
+
 	# Construction, basic 
 	def __init__(self):
     	
 		self.app = gui("Login Window", "1000x500")
 		self.app.setTitle("Cyder VideoChat")
-		self.app.setIcon("logo.png")
-		self.app.setBg("OrangeRed")
+		self.app.setIcon(self.logo)
+		self.app.setBg(self.bgColor)
 		self.app.setResizable(canResize=False)
 		self.username = None
 		self.pwd = None
+
+		self.server = servidorNombres.servidorNombres()
 		self.server.inicializacionPuertos()
 		self.server.conectarSocket()
-		cap = cv2.VideoCapture(0)
-		self.tvideo = tvideo.videoTransmision(self, cap)
+		
+		self.tvideo = tvideo.videoTransmision(self)
+		
+		self.app.setStopFunction(self.checkStop)
+		
+		signal.signal(signal.SIGINT, self.signal_handler)
+
+
+	def signal_handler(self, signal, frame):
+		if self.inCall == True:
+				self.colgar()
+		sys.exit(0)
+
+		#self.videoDisplayThread = threading.Thread(target = self.tvideo...)
+	def checkStop(self):
+		
+		if self.inCall == True:
+			self.colgar()
+			
+		return True
 
 
 	def startGUI(self):
@@ -35,9 +89,10 @@ class Gui:
 			self.loginFromFile()
 		except (EnvironmentError, ValueError):
 			self.setLoginLayout()
-
+			self.app.go()
 
 	def loginFromFile(self): 
+
 		try:
 			d = {}
 			with open("authentication.dat", "r") as f:
@@ -45,13 +100,16 @@ class Gui:
 				for line in f:
 				    (key, val) = line.split()
 				    d[key] = val
-		except (EnvironmentError, ValueError):
-			raise EnvironmentError("No authentication file")
-			
-		username = d['username']
-		pwd = d['pwd']
 
-		state = self.server.renovarUsername(username, pwd)
+			username = d['username']
+			pwd = d['pwd']
+
+		except (EnvironmentError, ValueError, KeyError):
+			raise EnvironmentError("No authentication file")
+			return
+			
+
+		state = self.server.confirmarUsername(username, pwd)
 		if state == "OK":
 			self.setUsersLayout()
 			self.username = username
@@ -64,8 +122,9 @@ class Gui:
 	def login(self):
 		username = self.app.getEntry("Usuario:   ")
 		pwd = self.app.getEntry("Contraseña:   ")
+
 		if username.count('#') != 0 :
-			self.app.errorBox("Error", "Su usuario no puede contener '#' ni otros caracetres extraños")
+			self.app.errorBox("Error en login", "Su usuario no puede contener '#' ni otros caracetres extraños")
 			self.app.setEntry("Usuario:   ", "", callFunction=False)
 			self.app.setEntry("Contraseña:   ", "", callFunction=False)
 			return 
@@ -88,7 +147,12 @@ class Gui:
 		self.username = None
 		self.pwd = None
 		os.remove(self.authenticationFile)
+		
+		if self.inCall == True:
+			self.colgar()
+
 		self.setLoginLayout()
+
 		
 	def loginButtons(self, btnName):
 		if btnName == "Exit":
@@ -96,26 +160,7 @@ class Gui:
 		if btnName == "Login":
 		    self.login()
 		  
-	def setLoginLayout(self):
 
-		# Initial conf
-		self.app.removeAllWidgets()
-		self.app.setSticky("")
-		self.app.setStretch('Both')
-
-		self.app.addImage("logo", "logo.png" , 0, 0, compound =None)
-
-		self.app.addLabelEntry("Usuario:   ", 1,0  )
-
-		self.app.addLabelSecretEntry("Contraseña:   ", 2, 0)
-
-		self.app.setFocus("Usuario:   ")
-
-		self.app.enableEnter(self.loginButtons)
-
-		self.app.addButtons( ["Login", "Exit"], self.loginButtons, 3, 0,  colspan=1)
-
-		self.app.go()
 
 	def actualizarUsuarios(self):
 		
@@ -124,12 +169,14 @@ class Gui:
 		self.app.clearListBox("userList", callFunction=True)
 
 		# nos eliminamos de la lista de usuarios a nosotros mismos para evitar problemas
-		if self.username != None:
+		if self.username != None and self.username != "":
 			self.userList.remove(self.username)
 
 		for item in self.userList:
 			if item != "":
 				self.app.addListItem("userList", item)
+				self.app.setListItemBg("userList", item, self.listColor)
+
 
 
 	# from : http://code.activestate.com/recipes/578860-setting-up-a-listbox-filter-in-tkinterpython-27/ 
@@ -143,6 +190,8 @@ class Gui:
 		for item in self.userList:
 			if search_term.lower() in item.lower():
 				self.app.addListItem("userList", item)
+				self.app.setListItemBg("userList", item, self.listColor)
+
 
 	def cambiarFrameVideo(self, frame):
 		self.app.setImageData("videoBox", frame, fmt = 'PhotoImage')
@@ -161,18 +210,44 @@ class Gui:
 			user = users[0]
 			if user != None:
 				ip = self.server.getIPUsuario(user)
+
+				if self.inCall == True:
+					ret = self.app.okBox("ERROR", "Para llamar a otro usuario necesitas colgar la videollamada actual", parent=None)
+
+					if ret == False:
+						return
+					elif ret == True:
+						self.colgar()
+				
 				if ip == None:
 					self.app.errorBox("ERROR", "A problem happened while trying to call {}".format(user))
 					return 
-				self.tvideo.doSendVideo(True)
-				mensaje = "LLamada al usuario: {} con IP: {} fallida. Funcionalidad por implementar".format(user, ip)
-				self.app.errorBox("Not implemented yet", mensaje)
+
+				self.webCamEndEvent = threading.Event()
+				self.webCamThread = threading.Thread(target = self.tvideo.transmisionWebCam, args = (self.webCamEndEvent,)) 
+				self.webCamThread.start()
+
+				mensaje = "LLamada al usuario: {} con IP: {} y puerto ... fallida. Funcionalidad por implementar".format(user, ip)
+				self.app.warningBox("Not implemented yet", mensaje)
+
+				# solo en el caso de que todo vaya bien...
+				self.inCall = True			
 			else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
 		else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
 
+	
+	def colgar(self):
 		
+		if self.inCall == True:
+			self.webCamEndEvent.set()
+			self.inCall = False
+			self.app.warningBox("Not implemented yet", "Funcionalidad colgar no implementada")
+ 
+			
+
+
 
 	def userButtons(self, btnName):
 		if btnName == "Search":
@@ -181,33 +256,31 @@ class Gui:
 			# cambiar esta funcion para que no "busque"
 			self.actualizarUsuarios()
 		elif btnName == "Logout":
-		    self.logout()
+			self.logout()
 		elif btnName == "Llamar":
 			self.llamar()
 		elif btnName == "Colgar":
-			self.tvideo.doSendVideo(False)
-			self.app.errorBox("Not implemented yet", "Funcionalidad colgar no implementada")
+			self.colgar()
+			
 
 
 	def setUsersLayout(self):
-
 		# Initial conf
 		self.app.removeAllWidgets()
 		self.app.setSticky("")
 		self.app.setStretch('Both')
 
 
-		self.app.addImage("logo", "logo.png" , 0,0, compound = None)
+		self.app.addImage("logo", self.logo , 0,0, compound = None)
 
-		self.app.addLabelEntry("Search:", 1, 0)
+		self.app.addLabelEntry("Search: ", 1, 0)
+		self.app.setEntryBg("Search: ", self.listColor)
 
 		self.app.addListBox("userList", self.userList,  2, 0)
 
-		self.actualizarUsuarios()
+		self.videoBox = self.app.addImage("videoBox",self.videoBoxImage , 0, 1, rowspan = 3)
 
-		self.videoFrame = self.app.addImage("videoBox","callicon.jpg" , 0, 1, rowspan = 3)
-
-		self.cameraCapture = self.app.addImage("webCamBox", "dandelions.jpg", 0, 2, rowspan = 3)
+		self.cameraCapture = self.app.addImage("webCamBox", self.webCamBoxImage, 0, 2, rowspan = 3)
 
 		self.app.addButtons(["Search", "RefreshUsers"], self.userButtons, 3, 0)
 
@@ -215,13 +288,35 @@ class Gui:
 
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
-		self.app.setPollTime(20) # ??
+		self.app.setPollTime(20) 
 		
-		self.app.registerEvent(self.tvideo.transmisionWebCam)
+		self.actualizarUsuarios()
 		
 		# Copypaste, may be useful cuando tengamos que controlar esas cosillas
-		#self.app.addStatusbar(fields=3)
-		#self.app.setStatusbar("FPS=",0)
-		#self.app.setStatusbar("00:00:00",1)
-		#self.app.setStatusbar("...etc",2)
+		self.app.addStatusbar(fields=3)
+		self.app.setStatusbarBg(self.bgColor)
+		self.app.setStatusbar("FPS=",0)
+		self.app.setStatusbar("00:00:00",1)
+		self.app.setStatusbar("...etc",2)
 		
+
+
+
+	def setLoginLayout(self):
+
+		# Initial conf
+		self.app.removeAllWidgets()
+		self.app.setSticky("")
+		self.app.setStretch('Both')
+
+		self.app.addImage("logo", self.logo , 0, 0, compound =None)
+
+		self.app.addLabelEntry("Usuario:   ", 1,0  )
+
+		self.app.addLabelSecretEntry("Contraseña:   ", 2, 0)
+
+		self.app.setFocus("Usuario:   ")
+
+		self.app.enableEnter(self.loginButtons)
+
+		self.app.addButtons( ["Login", "Exit"], self.loginButtons, 3, 0,  colspan=1)

@@ -1,6 +1,0 @@
-# Con esto, appJar funciona usando Python3
-
-sudo apt-get install python3-tk
-
-
-# Es decir, hacer: python3 command

@@ -4,36 +4,36 @@ from PIL import Image, ImageTk
 class videoTransmision:
 
 	gui = None
-	cap = None
 
 	sendVideo = False
 
 	# Construction, basic 
-	def __init__(self, gui, cap):
+	def __init__(self, gui):
 		self.gui = gui
-		self.cap = cap
+
+	
+
+	def getFrameFromWebCam(self, cap):
+		ret, frame = cap.read()
+		frame = cv2.resize(frame, (200,300))
+		cv2_im = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+		img_tk = ImageTk.PhotoImage(Image.fromarray(cv2_im))
+		return img_tk
 
 	# esta funciones estan diseñadas para funcionar en hilos
-	def transmisionWebCam(self):
+	def transmisionWebCam(self, iniEvent):
 
-		if self.sendVideo:
-			
-			ret, frame = self.cap.read()
-			frame = cv2.resize(frame, (200,300))
-			cv2_im = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-			img_tk = ImageTk.PhotoImage(Image.fromarray(cv2_im))
-			
-			self.gui.cambiarFrameWebCam(img_tk)
+		cap = cv2.VideoCapture(0)
+		
+		while not iniEvent.isSet():
 
-		else:
-
-			frame =  ImageTk.PhotoImage(Image.open("dandelions.jpg", "r")) 
+			frame = self.getFrameFromWebCam(cap)
 			self.gui.cambiarFrameWebCam(frame)
 
 
-			# getFrameFrom...
-			# comunicacionP2P.enviarFrame()...
-	def doSendVideo(self, boolean):
-		self.sendVideo = boolean
-
-#	def getFrameFromWebCam(self)
+		frame =  ImageTk.PhotoImage(Image.open(self.gui.webCamBoxImage, "r")) 
+		self.gui.cambiarFrameWebCam(frame)
+		
+		cap.release()
+		return
+		

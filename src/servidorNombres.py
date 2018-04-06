@@ -32,35 +32,11 @@ class servidorNombres:
 		self.socketCliente.connect((nombreSevidor,int(self.portSD)))
 		return 
 
-	def solicitarUsername(self, nick, pwd):
-		ip_address = self.socketCliente.getsockname()[0] # Internet dice que pue fallar pero no se mu bien
+	
+	def confirmarUsername(self, username, pwd):
+
+		ip_address = self.socketCliente.getsockname()[0] 
 		if (self.portCliente == None):
-			return None
-
-		mensaje = "REGISTER "+nick+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
-		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		aux = self.socketCliente.recv(1024)
-
-		respuesta = aux.decode('utf-8')
-
-		if respuesta == "NOK WRONG_PASS":
-			return None
-
-		# Guardamos los datos
-
-		with open("authentication.dat", "w") as f:
-			f.write('username '+ nick+'\n')
-			f.write('pwd '+ pwd + '\n')
-
-		return "OK"  # DE MOMENTO NO HAGO NA CON EL NICK Y EL TS, HARA FALTA?
-
-	# lo haremos cada vez que un usuario se conecte automaticamente (sin introducir credenciales)
-	# obviamente, antes permitirle iniciar sesion automaticamente , si falla, al login
-	def renovarUsername(self, username, pwd):
-
-		ip_address = socket.gethostbyname(socket.getfqdn())
-
-		if self.portCliente == None:
 			return None
 
 		mensaje = "REGISTER "+username+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
@@ -69,10 +45,28 @@ class servidorNombres:
 
 		respuesta = aux.decode('utf-8')
 
-		if respuesta == "NOK WRONG_PASS":
+		if respuesta == "NOK WRONG_PASS" or respuesta == "NOK SYNTAX_ERROR":
 			return None
 
 		return "OK"
+
+
+	def solicitarUsername(self, username, pwd):
+
+		ret = self.confirmarUsername(username, pwd)
+
+		if ret == "OK":
+
+			# Guardamos los datos
+
+			with open("authentication.dat", "w") as f:
+				f.write('username '+ username+'\n')
+				f.write('pwd '+ pwd + '\n')
+
+			return "OK"  
+
+		return "ERROR"
+		
 
 	def getIPUsuario(self, username):
 		mensaje = "QUERY " + username
@@ -97,9 +91,9 @@ class servidorNombres:
 		# El contador sirve para asegurarnos de que leemos todos los usuarios
 		aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
 		respuesta = aux
+
 		if respuesta == "NOK USER_UNKNOWN":
 			return None
-
 
 		numusers = int(aux.split(" ")[2])
 
