@@ -22,8 +22,8 @@ class Gui:
 	webCamBoxImage = "dandelions.gif"
 	
 	#configuracion de colores
-	bgColor = "Teal"
-	listColor = "LightCyan"
+	bgColor = "OrangeRed"
+	listColor = "PaleGoldenRod"
 
 
 	# modulos necesarios (inicializados en constructor)
@@ -225,6 +225,7 @@ class Gui:
 
 				self.webCamEndEvent = threading.Event()
 				self.webCamThread = threading.Thread(target = self.tvideo.transmisionWebCam, args = (self.webCamEndEvent,)) 
+				self.webCamThread.setDaemon(True)
 				self.webCamThread.start()
 
 				mensaje = "LLamada al usuario: {} con IP: {} y puerto ... fallida. Funcionalidad por implementar".format(user, ip)
