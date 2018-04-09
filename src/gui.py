@@ -10,7 +10,7 @@ import signal
 import sys
 
 # nuestros ficheros
-import servidorNombres
+import servidorDescubrimiento as server
 import transmisionVideo as tvideo
 
 class Gui:
@@ -27,7 +27,7 @@ class Gui:
 
 
 	# modulos necesarios (inicializados en constructor)
-	server = servidorNombres.servidorNombres()
+	server = None
 	tvideo = None
 
 	# widgets
@@ -59,7 +59,7 @@ class Gui:
 		self.username = None
 		self.pwd = None
 
-		self.server = servidorNombres.servidorNombres()
+		self.server = server.servidorDescubrimiento()
 		self.server.inicializacionPuertos()
 		self.server.conectarSocket()
 		
@@ -182,7 +182,7 @@ class Gui:
 	# from : http://code.activestate.com/recipes/578860-setting-up-a-listbox-filter-in-tkinterpython-27/ 
 	# refresca automaticamente
 	def buscarUsuarios(self):
-		search_term = self.app.getEntry("Search:")
+		search_term = self.app.getEntry("Search: ")
 		# userList = server.getUsers()
 		
 		self.app.clearListBox("userList", callFunction=True)

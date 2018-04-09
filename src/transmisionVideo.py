@@ -30,7 +30,7 @@ class videoTransmision:
 			frame = self.getFrameFromWebCam(cap)
 			self.gui.cambiarFrameWebCam(frame)
 
-
+		
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.webCamBoxImage, "r")) 
 		self.gui.cambiarFrameWebCam(frame)
 		
