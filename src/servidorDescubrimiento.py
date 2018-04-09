@@ -101,11 +101,19 @@ class servidorDescubrimiento:
 		while leidos < numusers :
 
 			aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
+			#usersAux = aux.split('#')
+			#print (usersAux)
+			#usersAux = usersAux[:-1]
+			#print (usersAux)
+			#for userCheck in usersAux:
+			#if len(userCheck.split(' ')) != 4:
+			#		numusers += numusers;
 			leidos += aux.count('#')
 			respuesta += aux
 
 		userList = []
 		users = respuesta.split("#")
+		
 		# el primer usuario no esta separado de los primeros mensajes (OK USERS_LIST)
 		# se le da un tratamiento distinto
 		fields = users[0].split(" ")

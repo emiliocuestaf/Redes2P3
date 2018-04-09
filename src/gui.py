@@ -23,7 +23,7 @@ class Gui:
 	
 	#configuracion de colores
 	bgColor = "OrangeRed"
-	listColor = "PaleGoldenRod"
+	listColor = "Cyan"
 
 
 	# modulos necesarios (inicializados en constructor)
@@ -111,9 +111,9 @@ class Gui:
 
 		state = self.server.confirmarUsername(username, pwd)
 		if state == "OK":
-			self.setUsersLayout()
 			self.username = username
 			self.pwd = pwd
+			self.setUsersLayout()
 			self.app.go()
 		else: 
 			os.remove(self.authenticationFile)
@@ -281,7 +281,11 @@ class Gui:
 
 		self.videoBox = self.app.addImage("videoBox",self.videoBoxImage , 0, 1, rowspan = 3)
 
-		self.cameraCapture = self.app.addImage("webCamBox", self.webCamBoxImage, 0, 2, rowspan = 3)
+		self.cameraCapture = self.app.addImage("webCamBox", self.webCamBoxImage, 0, 2, rowspan = 10)
+
+		self.app.addLabel("userLabel", "Usuario: {}".format(self.username), 0, 2)
+		self.app.setLabelBg("userLabel", self.listColor)
+
 
 		self.app.addButtons(["Search", "RefreshUsers"], self.userButtons, 3, 0)
 
