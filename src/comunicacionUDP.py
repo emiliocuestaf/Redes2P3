@@ -18,7 +18,8 @@ class comunicacionP2P:
 	
 	
 	socketRecepcion = None
-	bufferRecepcion = None
+	# Guardamos un buffer de dos segundos
+	bufferRecepcion = [None for i in xrange(self.FPS*2)]
 	
 	# Construction, basic 
 	def __init__(self, gui, myip, myPort, cap):
@@ -63,7 +64,38 @@ class comunicacionP2P:
 		self.socketEnvio.sendto(datos, (self.destIp, self.destPort)
 
 		
-	# esta funciones estan diseñadas para funcionar en hilos
+	# Reinicia los parametros para poder realizar otra llamada
+	def pararTransmision(self):
+		self.numOrden = 0
+		self.socketEnvio.close()
+		self.socketEnvio = None
+		self.destIp = 0
+		self.destPort = 0
+		self.cap.release()
+		
+
+	# funcion diseñada para estar en un hilo tol rato
+	def recepcionFrameVideo(self):
+		mensaje, ipCliente = self.socketRecepcion.recvfrom(2048)
+		# Recibimos el mensaje
+		parRecibidos = mensaje.split("#")
+		
+		nOrden = parRecibidos[0]
+		ts = parRecibidos[1]
+		res = parRecibidos[2].split("x")
+		resW = res[0]
+		resH = res[1]
+		FPS = parRecibidos[3]
+		compFrame = parRecibidos[4]
+
+	def recibirVideo(self, port):
+	
+		#cuestiones del formato de imagen y demas aqui
+		
+			
+		
+		
+		
 	def transmisionWebCam(self, iniEvent):
 
 		self.cap = cv2.VideoCapture(0)
@@ -71,32 +103,12 @@ class comunicacionP2P:
 		while not iniEvent.isSet():
 
 			frame = self.getFrameFromWebCam()
-			# Enviamos frame por el socket
 			self.enviarFrameVideo(frame)
 
 		
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.webCamBoxImage, "r")) 
 		self.gui.cambiarFrameWebCam(frame)
 		
-		cap.release()
+		self.pararTransmision()
+		
 		return
-		
-	def pararTransmision(self):
-		self.numOrden = 0
-		self.socketEnvio.close()
-		self.socketEnvio = None
-		self.destIp = 0
-		self.destPort = 0
-		
-		
-
-	# funcion diseñada para estar en un hilo tol rato
-	def recepcionVideo(self, port):
-		while True:
-			frame = recibirFrameVideo(self, port)
-			gui.cambiarFrameGUI(frame)
-		
-
-	def recibirFrameVideo(self, port):
-		#cuestiones del formato de imagen y demas aqui
-		

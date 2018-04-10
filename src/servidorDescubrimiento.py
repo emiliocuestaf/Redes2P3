@@ -2,52 +2,46 @@ import socket
 import time
 
 class servidorDescubrimiento:
-	socketCliente = None
+	ipAddress = None
 	portCliente = None
 	portSD = None
 	bufferLenght = 1024
 	nombreSevidor = "vega.ii.uam.es"
-
-	# Devuelve el puerto del cliente
-
-	def inicializacionPuertos(self):
-		d = {}
-		try:
-			with open("client.conf", "r") as f:
-				for line in f:
-				    (key, val) = line.split()
-				    d[key] = val
-		except EnvironmentError:
-			return None
-		self.portSD = d['portSD']
-		self.portCliente = d['portCliente']
-		return
-
+		
+	# Construction, basic 
+	def __init__(self, portSD, portCliente, publicIpAddress):
+		self.portSD = portSD
+		self.portCliente = portClient
+		self.ipAddress = publicIpAddress
 
 	# Devuelve el socket creado
 
 	def conectarSocket(self):
-		if (self.portSD == None):
+		if self.portSD == None:
 			return None
-		self.socketCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socketCliente.connect((self.nombreSevidor,int(self.portSD)))
-		return 
+		socketCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		socketCliente.connect((self.nombreSevidor,int(self.portSD)))
+		return socketCliente
 
 	
 	def confirmarUsername(self, username, pwd):
+	
+		socketCliente = self.conectarSocket()
 
-		ip_address = self.socketCliente.getsockname()[0] 
-		if (self.portCliente == None):
+		if socketCliente == None:
 			return None
 
-		mensaje = "REGISTER "+username+" "+ip_address+" "+self.portCliente+" "+pwd+" "+" V1"
-		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		aux = self.socketCliente.recv(1024)
+		mensaje = "REGISTER "+username+" "+self.ipAddress+" "+self.portCliente+" "+pwd+" "+" V1"
+		socketCliente.send(bytes(mensaje, 'utf-8'))
+		aux = socketCliente.recv(1024)
 
 		respuesta = aux.decode('utf-8')
 
 		if respuesta == "NOK WRONG_PASS" or respuesta == "NOK SYNTAX_ERROR":
+			self.cerrarConexion(socketCliente)
 			return None
+			
+		self.cerrarConexion(socketCliente)
 
 		return "OK"
 
@@ -70,30 +64,44 @@ class servidorDescubrimiento:
 		
 
 	def getIPUsuario(self, username):
+	
+		socketCliente = self.conectarSocket()
+
+		if socketCliente == None:
+			return None
+	
 		mensaje = "QUERY " + username
-		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		aux = self.socketCliente.recv(1024)
+		socketCliente.send(bytes(mensaje, 'utf-8'))
+		aux = socketCliente.recv(1024)
 
 		respuesta = aux.decode('utf-8')
 
 		if respuesta == "NOK USER_UNKNOWN":
+			self.cerrarConexion(socketCliente)
 			return None
 
 		fields = respuesta.split(" ")
 		ip = fields[3]
-
+		
+		self.cerrarConexion(socketCliente)
 		return ip
 
 
 	def listarUsuarios(self):
+	
+		socketCliente = self.conectarSocket()
+
+		if socketCliente == None:
+			return None
 		mensaje = "LIST_USERS"
-		self.socketCliente.send(bytes(mensaje, 'utf-8'))
+		socketCliente.send(bytes(mensaje, 'utf-8'))
 
 		# El contador sirve para asegurarnos de que leemos todos los usuarios
-		aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
+		aux = socketCliente.recv(self.bufferLenght).decode('utf-8')
 		respuesta = aux
 
 		if respuesta == "NOK USER_UNKNOWN":
+			self.cerrarConexion(socketCliente)
 			return None
 
 		numusers = int(aux.split(" ")[2])
@@ -101,7 +109,7 @@ class servidorDescubrimiento:
 		leidos = aux.count('#')
 		while leidos < numusers :
 
-			aux = self.socketCliente.recv(self.bufferLenght).decode('utf-8')
+			aux = socketCliente.recv(self.bufferLenght).decode('utf-8')
 			#usersAux = aux.split('#')
 			#print (usersAux)
 			#usersAux = usersAux[:-1]
@@ -125,6 +133,7 @@ class servidorDescubrimiento:
 			fields = user.split(" ")
 			userList.append(fields[0])
 
+		self.cerrarConexion(socketCliente)
 		return userList
 
 	#def solicitarConexionUsuario(self, username, port):
@@ -134,9 +143,9 @@ class servidorDescubrimiento:
 		# respuesta incluye: OK/NO, PUERTO AL QUE MANDAR VIDEO
 		# se inicia la transmision de video
 
-	def cerrarConexion(self):
+	def cerrarConexion(self, socketCliente):
 		mensaje = "QUIT"
-		self.socketCliente.send(bytes(mensaje, 'utf-8'))
-		respuesta = self.socketCliente.recv(1024)
-		self.socketCliente.close()
+		socketCliente.send(bytes(mensaje, 'utf-8'))
+		respuesta = socketCliente.recv(1024)
+		socketCliente.close()
 		return respuesta
