@@ -16,10 +16,12 @@ class comunicacionP2P:
 	resH = 480
 	
 	
-	
 	socketRecepcion = None
 	# Guardamos un buffer de dos segundos
 	bufferRecepcion = [None for i in xrange(self.FPS*2)]
+	
+	counter = 0
+	bufferAux = []
 	
 	# Construction, basic 
 	def __init__(self, gui, myip, myPort, cap):
@@ -71,24 +73,117 @@ class comunicacionP2P:
 		self.socketEnvio = None
 		self.destIp = 0
 		self.destPort = 0
+		self.bufferAux = []
 		self.cap.release()
 		
+		
+	def primeraRecepcionVideo(self):
+	
+		while self.bufferRecepcion.count(None) > 0:
+			if not self.bufferAux:
+				mensaje, ipCliente = self.socketRecepcion.recvfrom(2048)
+				# Recibimos el mensaje
+				parRecibidos = mensaje.split("#")
+				nOrden = parRecibidos[0]
+			
+				if nOrden == self.counter:
+					compFrame = parRecibidos[4]
+					self.bufferRecepcion.pop(0)
+					self.bufferRecepcion.append(compFrame)
+					self.counter ++
+				else:
+					self.bufferAux.append(mensaje)
+			else:
+				length = len(self.bufferAux)
+				flag = 0
+				for i in [0:length]:
+					men = self.bufferAux[i]
+					parRecibidos = men.split("#")
+					nOrden = parRecibidos[0]
+					if nOrden == self.counter:
+						compFrame = parRecibidos[4]
+						self.counter ++
+						self.bufferRecepcion.pop(0)
+						self.bufferRecepcion.append(compFrame)
+						self.bufferAux.pop(i)
+						flag = 1
+						break
+				if flag == 0:
+					mensaje, ipCliente = self.socketRecepcion.recvfrom(2048)
+					# Recibimos el mensaje
+					parRecibidos = mensaje.split("#")
+					nOrden = parRecibidos[0]
+			
+					if nOrden == self.counter:
+						compFrame = parRecibidos[4]
+						self.bufferRecepcion.pop(0)
+						self.bufferRecepcion.append(compFrame)
+						self.counter ++
+					else:
+						self.bufferAux.append(mensaje)
+						
+						
 
 	# funcion diseñada para estar en un hilo tol rato
 	def recepcionFrameVideo(self):
-		mensaje, ipCliente = self.socketRecepcion.recvfrom(2048)
-		# Recibimos el mensaje
-		parRecibidos = mensaje.split("#")
-		
-		nOrden = parRecibidos[0]
-		ts = parRecibidos[1]
-		res = parRecibidos[2].split("x")
-		resW = res[0]
-		resH = res[1]
-		FPS = parRecibidos[3]
-		compFrame = parRecibidos[4]
+	
+		if not self.bufferAux:
+			mensaje, ipCliente = self.socketRecepcion.recvfrom(2048)
+			# Recibimos el mensaje
+			parRecibidos = mensaje.split("#")
+			nOrden = parRecibidos[0]
+	
+			if nOrden == self.counter:
+				compFrame = parRecibidos[4]
+				self.bufferRecepcion.append(compFrame)
+				self.counter ++
+				return 1
+			else:
+				self.bufferAux.append(mensaje)
+				return None
+		else:
+			length = len(self.bufferAux)
+			for i in [0:length]:
+				men = self.bufferAux[i]
+				parRecibidos = men.split("#")
+				nOrden = parRecibidos[0]
+				if nOrden == self.counter:
+					compFrame = parRecibidos[4]
+					self.counter ++
+					self.bufferRecepcion.append(compFrame)
+					self.bufferAux.pop(i)
+					return 1
+			mensaje, ipCliente = self.socketRecepcion.recvfrom(2048)
+			# Recibimos el mensaje
+			parRecibidos = mensaje.split("#")
+			nOrden = parRecibidos[0]
 
-	def recibirVideo(self, port):
+			if nOrden == self.counter:
+				compFrame = parRecibidos[4]
+				self.bufferRecepcion.append(compFrame)
+				self.counter ++
+				return 1
+			else:
+				self.bufferAux.append(mensaje)
+				return None
+	
+			# Miramos si estamos rellenando el buffer por primera vez
+				
+					
+				
+				#nOrden = parRecibidos[0]
+			#	ts = parRecibidos[1]
+			#	res = parRecibidos[2].split("x")
+			#	resW = res[0]
+			#	resH = res[1]
+			#	FPS = parRecibidos[3]
+			#	compFrame = parRecibidos[4]
+				
+		
+		# Miramos si estamos rellenando el buffer por primera vez
+		
+
+	def recibirVideo(self, frame):
 	
 		#cuestiones del formato de imagen y demas aqui
 		
