@@ -59,9 +59,23 @@ class Gui:
 		self.username = None
 		self.pwd = None
 
-		self.server = server.servidorDescubrimiento()
-		self.server.inicializacionPuertos()
-		self.server.conectarSocket()
+		d = {}
+		try:
+			with open("client.conf", "r") as f:
+				for line in f:
+				    (key, val) = line.split()
+				    d[key] = val
+
+			self.portSD = d['portSD']
+			self.portUsername = d['portCliente']
+			self.publicIpAddress = d['IP']
+		except (EnvironmentError, Exception):
+			
+			print ("ERROR: El fichero de configuracion no tiene el formato adecuado")
+			return 
+
+		
+		self.server = server.servidorDescubrimiento(portSD= self.portSD,portCliente= self.portUsername,publicIpAddress= self.publicIpAddress )
 		
 		self.tvideo = tvideo.videoTransmision(self)
 		
