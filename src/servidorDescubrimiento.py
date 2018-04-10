@@ -2,8 +2,7 @@ import socket
 import time
 
 class servidorDescubrimiento:
-	ipAddress = None
-	portCliente = None
+
 	portSD = None
 	bufferLenght = 1024
 	nombreSevidor = "vega.ii.uam.es"
@@ -11,7 +10,6 @@ class servidorDescubrimiento:
 	# Construction, basic 
 	def __init__(self, portSD):
 		self.portSD = portSD
-
 
 	# Devuelve el socket creado
 
