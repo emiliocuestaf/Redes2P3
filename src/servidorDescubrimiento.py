@@ -9,10 +9,9 @@ class servidorDescubrimiento:
 	nombreSevidor = "vega.ii.uam.es"
 		
 	# Construction, basic 
-	def __init__(self, portSD, portCliente, publicIpAddress):
+	def __init__(self, portSD):
 		self.portSD = portSD
-		self.portCliente = portCliente
-		self.ipAddress = publicIpAddress
+
 
 	# Devuelve el socket creado
 
@@ -24,14 +23,14 @@ class servidorDescubrimiento:
 		return socketCliente
 
 	
-	def confirmarUsername(self, username, pwd):
+	def confirmarUsername(self, portCliente, publicIpAddress, username, pwd):
 	
 		socketCliente = self.conectarSocket()
 
 		if socketCliente == None:
 			return None
 
-		mensaje = "REGISTER "+username+" "+self.ipAddress+" "+self.portCliente+" "+pwd+" "+" V1"
+		mensaje = "REGISTER {} {} {} {} V1".format(username, publicIpAddress, portCliente, pwd)
 		socketCliente.send(bytes(mensaje, 'utf-8'))
 		aux = socketCliente.recv(1024)
 
@@ -46,9 +45,9 @@ class servidorDescubrimiento:
 		return "OK"
 
 
-	def solicitarUsername(self, username, pwd):
+	def solicitarUsername(self, portCliente, publicIpAddress, username, pwd):
 
-		ret = self.confirmarUsername(username, pwd)
+		ret = self.confirmarUsername(portCliente, publicIpAddress, username, pwd)
 
 		if ret == "OK":
 
@@ -63,7 +62,7 @@ class servidorDescubrimiento:
 		return "ERROR"
 		
 
-	def getIPUsuario(self, username):
+	def getInfoUsuario(self, username):
 	
 		socketCliente = self.conectarSocket()
 
@@ -76,15 +75,21 @@ class servidorDescubrimiento:
 
 		respuesta = aux.decode('utf-8')
 
+		self.cerrarConexion(socketCliente)
+
 		if respuesta == "NOK USER_UNKNOWN":
-			self.cerrarConexion(socketCliente)
 			return None
 
+
 		fields = respuesta.split(" ")
-		ip = fields[3]
+
+		infoDict = {}
+		infoDict['username'] = fields[2]
+		infoDict['ip'] = fields[3]
+		infoDict['listenPort'] = fields[4]
+		infoDict['protocols'] = fields[5]
 		
-		self.cerrarConexion(socketCliente)
-		return ip
+		return infoDict
 
 
 	def listarUsuarios(self):

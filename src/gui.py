@@ -47,6 +47,10 @@ class Gui:
 	inCall = False
 
 
+	# Cosas que conviene guardar
+	username = None
+	pwd = None
+
 
 	# Construction, basic 
 	def __init__(self):
@@ -70,12 +74,12 @@ class Gui:
 			self.portUsername = d['portCliente']
 			self.publicIpAddress = d['IP']
 		except (EnvironmentError, Exception):
-			
+
 			print ("ERROR: El fichero de configuracion no tiene el formato adecuado")
 			return 
 
 		
-		self.server = server.servidorDescubrimiento(portSD= self.portSD,portCliente= self.portUsername,publicIpAddress= self.publicIpAddress )
+		self.server = server.servidorDescubrimiento(portSD= self.portSD)
 		
 		self.tvideo = tvideo.videoTransmision(self)
 		
@@ -90,6 +94,7 @@ class Gui:
 		sys.exit(0)
 
 		#self.videoDisplayThread = threading.Thread(target = self.tvideo...)
+	
 	def checkStop(self):
 		
 		if self.inCall == True:
@@ -122,8 +127,7 @@ class Gui:
 			raise EnvironmentError("No authentication file")
 			return
 			
-
-		state = self.server.confirmarUsername(username, pwd)
+		state = self.server.confirmarUsername(self.portUsername, self.publicIpAddress, username, pwd)
 		if state == "OK":
 			self.username = username
 			self.pwd = pwd
@@ -223,8 +227,8 @@ class Gui:
 		if users:
 			user = users[0]
 			if user != None:
-				ip = self.server.getIPUsuario(user)
-
+				infoUser = self.server.getInfoUsuario(user)
+				ip = infoUser['ip']
 				if self.inCall == True:
 					ret = self.app.okBox("ERROR", "Para llamar a otro usuario necesitas colgar la videollamada actual", parent=None)
 
@@ -261,8 +265,6 @@ class Gui:
 			self.app.warningBox("Not implemented yet", "Funcionalidad colgar no implementada")
  
 			
-
-
 
 	def userButtons(self, btnName):
 		if btnName == "Search":
