@@ -6,6 +6,8 @@ class servidorDescubrimiento:
 	portCliente = None
 	portSD = None
 	bufferLenght = 1024
+	nombreSevidor = "vega.ii.uam.es"
+
 	# Devuelve el puerto del cliente
 
 	def inicializacionPuertos(self):
@@ -27,9 +29,8 @@ class servidorDescubrimiento:
 	def conectarSocket(self):
 		if (self.portSD == None):
 			return None
-		nombreSevidor = "vega.ii.uam.es"
 		self.socketCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socketCliente.connect((nombreSevidor,int(self.portSD)))
+		self.socketCliente.connect((self.nombreSevidor,int(self.portSD)))
 		return 
 
 	
