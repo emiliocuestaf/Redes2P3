@@ -11,7 +11,7 @@ class servidorDescubrimiento:
 	# Construction, basic 
 	def __init__(self, portSD, portCliente, publicIpAddress):
 		self.portSD = portSD
-		self.portCliente = portClient
+		self.portCliente = portCliente
 		self.ipAddress = publicIpAddress
 
 	# Devuelve el socket creado
