@@ -252,6 +252,10 @@ class Gui:
 	def colgar(self):
 		
 		if self.inCall == True:
+			print(self.p2pIP)
+			print(self.p2pListenPort)
+			print(self.p2pNick)
+			print(self.username)
 			self.comtcp.send_end(self.p2pIP, self.p2pListenPort, self.username)
  
 	def play(self):

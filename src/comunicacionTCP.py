@@ -1,5 +1,6 @@
 import cv2
 import socket
+import threading
 from PIL import Image, ImageTk
 import servidorDescubrimiento as server
 import comunicacionUDP as UDP
@@ -51,16 +52,16 @@ class ComunicacionTCP:
 	#### FUNCIONES DE ENVIO DE PETICIONES
 
 	def send_petition(self, ipDest, portDest , petition):
-		print("my")
+		
 		self.socketEnvio = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		print(ipDest)
 		print(portDest)
 		try: 
 			self.socketEnvio.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			self.socketEnvio.settimeout(10)
+			self.socketEnvio.settimeout(5)
 			self.socketEnvio.connect((ipDest, int(portDest)))
 			self.socketEnvio.settimeout(None)
-			print("name")
+		
 		except (OSError, ConnectionRefusedError):
 			print("No se ha podido establecer una conexion con ese usuario") 
 			return "ERROR"
@@ -106,18 +107,21 @@ class ComunicacionTCP:
 
 	def send_call_busy(self, ipDest, portDest):
 		petition = "CALL_BUSY"
-		self.send_petition(ipdest, portDest, petition)
+		self.send_petition(ipDest, portDest, petition)
 
 	#### FUNCIONES DE RECEPCION DE PETICIONES
 
 	def calling_handler(self, username , srcUDPport):
 
-		if self.gui.inCall == True:
+		print("Estas recibiendo una llamada")
+
+		userInfo = self.server.getInfoUsuario(username)
+
+		if self.gui.inCall == False:
 
 			message = "{} te esta llamando!!! ¿Quieres aceptar?".format(username)
-			ret = self.gui.yesNoBox("LLamada entrante", message, parent=None)
+			ret = self.gui.app.yesNoBox("LLamada entrante", message, parent=None)
 
-			userInfo = self.server.getInfoUsuario(username)
 
 			if ret == False:
 
@@ -133,13 +137,13 @@ class ComunicacionTCP:
 				self.endEvent = threading.Event()
 				self.pauseEvent = threading.Event()
 				self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
-				self.videoReceptionThread = threading.Thread(target = self.udpcom.receptionWebCam, args = (self.endEvent, self.pauseEvent)) 
+				self.videoReceptionThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
 				self.webCamThread.start()
 				self.videoReceptionThread.start()
 
 		else:
 
-				self.send_call_busy(ipDest= userInfo['ip'], portDest = userInfo['listenPort'])
+			self.send_call_busy(ipDest= userInfo['ip'], portDest = userInfo['listenPort'])
 
 
 	def call_hold_handler(self, username):

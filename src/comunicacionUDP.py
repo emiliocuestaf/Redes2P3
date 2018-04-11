@@ -1,6 +1,8 @@
 import time
 import queue
 import socket
+import cv2
+from PIL import Image, ImageTk
 
 
 class comunicacionUDP:
@@ -27,7 +29,7 @@ class comunicacionUDP:
 		self.gui = gui
 		self.listenPort = myPort
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.sock.bind(("0.0.0.0", myPort))
+		self.sock.bind(("0.0.0.0", int(myPort)))
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
 		
@@ -62,21 +64,21 @@ class comunicacionUDP:
 
 	def enviarFrameVideo(self, frame):
 	
-		datos = ""+self.numOrden+"#"+time.time()+"#"+self.resW+"x"+self.resH+"#"+self.FPS+"#"+frame
+		datos = "{}#{}#{}x{}#{}#{}".format(self.numOrden, time.time(), self.resW, self.resH , self.FPS, frame)
 		self.numOrden += self.numOrden 
 		# Num maximo de numOrden?? 
 		if self.cliente == True:
-			self.socket.sendto(datos, (self.destIp, self.destPort))
+			self.sock.sendto(datos.encode('utf-8'), (self.destIp, int(self.destPort)))
 		else:
-			self.socket.sendto(datos, self.destIp)
+			self.sock.sendto(datos.encode('utf-8'), (self.destIp, int(self.destPort)))
 
 		
 	# Reinicia los parametros para poder realizar otra llamada
 	def pararTransmision(self):
 
-		self.socket.close()
+		self.sock.close()
 		self.numOrden = 0
-		self.socket = None
+		self.sock = None
 		self.destIp = 0
 		self.destPort = 0
 		self.bufferAux.clear()
@@ -89,9 +91,11 @@ class comunicacionUDP:
 	
 		while self.bufferRecepcion.full() == False:
 		
-			mensaje, ip = self.socket.recvfrom(2048)
+			mensaje, ip = self.sock.recvfrom(2048)
 			
-			if ipCliente != self.destIp:
+			mensaje = mensaje.decode('utf-8')
+
+			if ip != self.destIp:
 				continue
 			
 			split = mensaje.split("#")
