@@ -1,11 +1,10 @@
 import time
 import queue
+import socket
 
 
 class comunicacionUDP:
 
-	gui
-	cap
 	
 	sock = None
 	destIp = 0
@@ -64,19 +63,17 @@ class comunicacionUDP:
 	def enviarFrameVideo(self, frame):
 	
 		datos = ""+self.numOrden+"#"+time.time()+"#"+self.resW+"x"+self.resH+"#"+self.FPS+"#"+frame
-		self.numOrden ++ 
+		self.numOrden += self.numOrden 
 		# Num maximo de numOrden?? 
 		if self.cliente == True:
-			self.socket.sendto(datos, (self.destIp, self.destPort)
+			self.socket.sendto(datos, (self.destIp, self.destPort))
 		else:
 			self.socket.sendto(datos, self.destIp)
 
 		
 	# Reinicia los parametros para poder realizar otra llamada
 	def pararTransmision(self):
-	
-	#thread safe??
-	
+
 		self.socket.close()
 		self.numOrden = 0
 		self.socket = None

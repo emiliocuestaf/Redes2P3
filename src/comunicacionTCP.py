@@ -1,4 +1,5 @@
 import cv2
+import socket
 from PIL import Image, ImageTk
 import servidorDescubrimiento as server
 import comunicacionUDP as UDP
@@ -38,7 +39,7 @@ class ComunicacionTCP:
 		self.listenPort = listenPort
 		self.publicIP = myIP
 		self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socketRecepcion.bind(("0.0.0.0", self.listenPort))
+		self.socketRecepcion.bind(('0.0.0.0', int(self.listenPort)))
 		self.socketRecepcion.listen(self.queueSize)
 		self.server = server.servidorDescubrimiento(serverPort)
 		
@@ -50,29 +51,43 @@ class ComunicacionTCP:
 	#### FUNCIONES DE ENVIO DE PETICIONES
 
 	def send_petition(self, ipDest, portDest , petition):
+		print("my")
 		self.socketEnvio = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socketEnvio.connect((ipDest, int(portDest)))
-		self.socketEnvio.send(bytes(peticion, 'utf-8'))
+		print(ipDest)
+		print(portDest)
+		try: 
+			self.socketEnvio.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+			self.socketEnvio.settimeout(10)
+			self.socketEnvio.connect((ipDest, int(portDest)))
+			self.socketEnvio.settimeout(None)
+			print("name")
+		except (OSError, ConnectionRefusedError):
+			print("No se ha podido establecer una conexion con ese usuario") 
+			return "ERROR"
+
+		self.socketEnvio.send(bytes(petition, 'utf-8'))
+		self.socketEnvio.close()
 
 	def send_calling(self, ipDest, portDest, myUDPport, username):
+		print("hallelujah")
 		petition = "CALLING {} {}".format(username, myUDPport)
-		self.send_petition(self, ipDest, portDest, petition)
-
+		self.send_petition(ipDest, portDest, petition)
+		print("hallelujah33")
 	
 	def send_hold(self, ipDest, portDest, username):
 		petition = "CALL_HOLD {}".format(username)
-		self.send_petition(self, ipDest, portDest, petition)
+		self.send_petition(ipDest, portDest, petition)
 		self.pauseEvent.set()
 	
 
 	def send_resume(self, ipDest, portDest, username):
 		petition = "CALL_RESUME {}".format(username)
-		self.send_petition(self, ipDest, portDest, petition)
+		self.send_petition(ipDest, portDest, petition)
 		self.pauseEvent.clear()
 
 	def send_end(self, ipDest, portDest, username):
 		petition = "CALL_END {}".format(username)
-		self.send_petition(self,  ipDest, portDest, petition)
+		self.send_petition(ipDest, portDest, petition)
 		self.endEvent.set()
 		self.gui.inCall = False
 
@@ -81,17 +96,17 @@ class ComunicacionTCP:
 
 	def send_call_accepted(self, ipDest, portDest, myUDPport, username):
 		petition = "CALL_ACCEPTED {} {}".format(username, myUDPport)
-		self.send_petition(self, ipDest, portDest, petition)
+		self.send_petition(ipDest, portDest, petition)
 	
 
 	def send_call_denied(self, ipDest, portDest, username):
 		petition = "CALL_DENIED {}".format(username)
-		self.send_petition(self, ipDest, portDest, petition)
+		self.send_petition(ipDest, portDest, petition)
 	
 
 	def send_call_busy(self, ipDest, portDest):
 		petition = "CALL_BUSY"
-		self.send_petition(self, ipdest, portDest, petition)
+		self.send_petition(ipdest, portDest, petition)
 
 	#### FUNCIONES DE RECEPCION DE PETICIONES
 
@@ -173,6 +188,8 @@ class ComunicacionTCP:
 			self.pauseEvent = threading.Event()
 			self.webCamThread = threading.Thread(target = self.UDPself.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
 			self.videoReceptionThread = threading.Thread(target = self.UDPself.udpcom.receptionWebCam, args = (self.endEvent, self.pauseEvent)) 
+			self.webCamThread.setDaemon(True)
+			self.videoReceptionThread.setDaemon(True)
 			self.webCamThread.start()
 			self.videoReceptionThread.start()
 
@@ -226,13 +243,13 @@ class ComunicacionTCP:
 	# Diseñada para funcionar en hilo
 	# Esta funcion escucha en el puerto proporcionado en el fichero de configuracion mientras la aplicacion se este ejecutando
 	# No se debe cerrar antes o no se podran recibir llamadas de otros usuarios
-	def read(self, closeEvent):
+	def listening(self, endEvent):
 
-		while closeEvent.isSet():
+		while not endEvent.isSet():
 
-		# Asumimos que estos comandos caben en 1024 bytes
-
-			text = self.socketRecepcion.recv(1024)
+			# Asumimos que estos comandos caben en 1024 bytes
+			conn, addr = self.socketRecepcion.accept()
+			text = conn.recv(1024)
 
 			if text: 
 

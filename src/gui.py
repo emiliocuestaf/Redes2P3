@@ -10,7 +10,7 @@ import signal
 import sys
 
 # nuestros ficheros
-import servidorDescubrimiento as server
+import servidorDescubrimiento as SD
 import transmisionVideo as tvideo
 import comunicacionTCP as TCP
 
@@ -24,37 +24,28 @@ class Gui:
 	
 	#configuracion de colores
 	bgColor = "OrangeRed"
-	listColor = "Cyan"
+	listColor = "LightGrey"
 
-
-	# modulos necesarios (inicializados en constructor)
+	# objetos de clase necesarios (inicializados en constructor)
 	server = None
 	tvideo = None
+	comtcp = None
 
 	# widgets
 	userList = []
 
-	# comunicacionTCP
+	# Thread que escucha comandos
+	listeningThread = None
 
-	comtcp = None
-
-	# videoDisplay management
-	videoDisplayThread = None
-	
-
-	# flag para saber si estamos en llamada o no
+	# Flag para saber si estamos en llamada o no
 	inCall = False
-	# datos de la persona con la que se esta hablando
+	# Datos de la persona con la que se esta hablando
 	p2pNick = None
 	p2pIP = None
 	p2pListenPort = None
 
-
-
-	# Cosas que conviene guardar
 	username = None
 	pwd = None
-
 
 	# Construction, basic 
 	def __init__(self):
@@ -75,26 +66,29 @@ class Gui:
 				    d[key] = val
 
 			self.portSD = d['portSD']
-			self.portUsername = d['portCliente']
+			self.portTCP = d['portTCP']
 			self.publicIpAddress = d['IP']
+			self.portUDP = d['portUDP']
 		except (EnvironmentError, Exception):
 
 			print ("ERROR: El fichero de configuracion no tiene el formato adecuado")
 			return 
 
 		
-		self.server = server.servidorDescubrimiento(portSD= self.portSD)
+		self.server = SD.servidorDescubrimiento(portSD= self.portSD)
 		
+
 		self.tvideo = tvideo.videoTransmision(self)
 
-		self.comtcp = TCP.comunicacionTCP(gui= self, myIP= self.publicIpAddress, listenPort= self.listenPort, portSD= self.portSD)
-		
+		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.publicIpAddress, listenPort= self.portTCP, serverPort= self.portSD)
+
 		self.app.setStopFunction(self.checkStop)
 		
 		signal.signal(signal.SIGINT, self.signal_handler)
 
 
 	def signal_handler(self, signal, frame):
+
 		if self.inCall == True:
 				self.colgar()
 		sys.exit(0)
@@ -103,6 +97,7 @@ class Gui:
 	
 	def checkStop(self):
 		
+		self.endEvent.set()
 		if self.inCall == True:
 			self.colgar()
 			
@@ -133,11 +128,16 @@ class Gui:
 			raise EnvironmentError("No authentication file")
 			return
 			
-		state = self.server.confirmarUsername(self.portUsername, self.publicIpAddress, username, pwd)
+		state = self.server.confirmarUsername(self.portTCP, self.publicIpAddress, username, pwd)
 		if state == "OK":
+
 			self.username = username
 			self.pwd = pwd
 			self.setUsersLayout()
+			self.endEvent = threading.Event()		
+			self.listeningThread = threading.Thread(target= self.comtcp.listening, args=(self.endEvent,))
+			self.listeningThread.setDaemon(True)
+			self.listeningThread.start()
 			self.app.go()
 		else: 
 			os.remove(self.authenticationFile)
@@ -153,7 +153,7 @@ class Gui:
 			self.app.setEntry("Contraseña:   ", "", callFunction=False)
 			return 
 
-		state = self.server.solicitarUsername(username , pwd)
+		state = self.server.solicitarUsername(self.portTCP, self.publicIpAddress, username , pwd)
 		if state == "OK":
 			self.username = username
 			self.pwd = pwd
@@ -181,8 +181,6 @@ class Gui:
 		if btnName == "Login":
 		    self.login()
 		  
-
-
 	def actualizarUsuarios(self):
 		
 		self.userList = self.server.listarUsuarios()
@@ -197,7 +195,6 @@ class Gui:
 			if item != "":
 				self.app.addListItem("userList", item)
 				self.app.setListItemBg("userList", item, self.listColor)
-
 
 
 	# refresca automaticamente
@@ -219,18 +216,15 @@ class Gui:
 	def cambiarFrameWebCam(self, frame):
 		self.app.setImageData("webCamBox", frame, fmt = 'PhotoImage')
 
-	def notificacionLLamada(self, user, IP, Port):
-		# por implementar
-		pass  
-
 	def llamar(self):
 		users = self.app.getListBox("userList")
-		
+		print("Estas haciendo una llamada1")
 		if users:
 			user = users[0]
 			if user != None:
 				infoUser = self.server.getInfoUsuario(user)
 				ip = infoUser['ip']
+				print("Estas haciendo una llamada2")
 				if self.inCall == True:
 					ret = self.app.okBox("ERROR", "Para llamar a otro usuario necesitas colgar la videollamada actual", parent=None)
 
@@ -243,8 +237,10 @@ class Gui:
 					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar la llamada".format(user))
 					return 
 
-				self.comtcp.send_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUsername , username= self.username)
-			
+				print("Estas haciendo una llamada3")
+				self.comtcp.send_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUDP , username= self.username)
+				print("Estas haciendo una llamada34")
+
 			else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
 		else:
@@ -256,6 +252,16 @@ class Gui:
 		if self.inCall == True:
 			self.comtcp.send_end(self.p2pIP, self.p2pListenPort, self.username)
  
+	def play(self):
+		
+		if self.inCall == True:
+			self.comtcp.send_resume(self.p2pIP, self.p2pListenPort, self.username)
+
+	def pause(self):
+		
+		if self.inCall == True:
+			self.comtcp.send_hold(self.p2pIP, self.p2pListenPort, self.username)
+
 			
 	def userButtons(self, btnName):
 		if btnName == "Search":
@@ -268,13 +274,16 @@ class Gui:
 			self.llamar()
 		elif btnName == "Colgar":
 			self.colgar()
-		#elif btnName == ""
-			
+		elif btnName == "Play":
+			self.play()
+		elif btnName == "Pause":
+			self.pause()
 
 
 	def setUsersLayout(self):
 		# Initial conf
 		self.app.removeAllWidgets()
+		self.app.removeStatusbar()
 		self.app.setSticky("")
 		self.app.setStretch('Both')
 
@@ -318,6 +327,7 @@ class Gui:
 
 		# Initial conf
 		self.app.removeAllWidgets()
+		self.app.removeStatusbar()
 		self.app.setSticky("")
 		self.app.setStretch('Both')
 
