@@ -59,20 +59,23 @@ class ComunicacionTCP:
 		self.send_petition(self, ipDest, portDest, petition)
 
 	
-	def send_hold((self, ipDest, portDest, username):
+	def send_hold(self, ipDest, portDest, username):
 		petition = "CALL_HOLD {}".format(username)
 		self.send_petition(self, ipDest, portDest, petition)
+		self.pauseEvent.set()
 	
 
 	def send_resume(self, ipDest, portDest, username):
 		petition = "CALL_RESUME {}".format(username)
 		self.send_petition(self, ipDest, portDest, petition)
-	
+		self.pauseEvent.clear()
 
 	def send_end(self, ipDest, portDest, username):
 		petition = "CALL_END {}".format(username)
 		self.send_petition(self,  ipDest, portDest, petition)
-	
+		self.endEvent.set()
+		self.gui.inCall = False
+
 
 	#### FUNCIONES DE ENVIO DE RESPUESTAS
 
@@ -92,58 +95,53 @@ class ComunicacionTCP:
 
 	#### FUNCIONES DE RECEPCION DE PETICIONES
 
-	def calling_handler(username , srcUDPport):
+	def calling_handler(self, username , srcUDPport):
 
-		message = "{} te esta llamando!!! ¿Quieres aceptar?".format(username)
-		ret = self.gui.yesNoBox("LLamada entrante", message, parent=None)
+		if self.gui.inCall == True:
 
-		userInfo = self.server.getInfoUsuario(username)
+			message = "{} te esta llamando!!! ¿Quieres aceptar?".format(username)
+			ret = self.gui.yesNoBox("LLamada entrante", message, parent=None)
 
+			userInfo = self.server.getInfoUsuario(username)
 
-		if ret == False:
+			if ret == False:
 
-			self.send_call_denied(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , username = self.gui.username)
+				self.send_call_denied(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , username = self.gui.username)
 
-		elif ret == True:
-			
+			elif ret == True:
+				
+				self.send_call_accepted(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , myUDPport =  self.listenPort, username = self.gui.username)					
 
-			if self.gui.inCall == True:
-					ret = self.app.okBox("ERROR", "Para hacer una llamada con otro usuario necesitas colgar la actual", parent=None)
+				self.gui.inCall = True
+				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.listenPort)
+				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= srcUDPport, cliente= False)
+				self.endEvent = threading.Event()
+				self.pauseEvent = threading.Event()
+				self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
+				self.videoReceptionThread = threading.Thread(target = self.udpcom.receptionWebCam, args = (self.endEvent, self.pauseEvent)) 
+				self.webCamThread.start()
+				self.videoReceptionThread.start()
 
-					if ret == False:
-						return
-					elif ret == True:
-						self.colgar()
-			
+		else:
 
-			self.send_call_accepted(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , myUDPport =  username = self.gui.username)					
-
-			self.gui.inCall = True
-			self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.myPort)
-			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= srcUDPport, cliente= False)
-			self.endEvent = threading.Event()
-			self.pauseEvent = threading.Event()
-			self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
-			self.videoReceptionThread = threading.Thread(target = self.udpcom.receptionWebCam, args = (self.endEvent, self.pauseEvent)) 
-			self.webCamThread.start()
-			self.videoReceptionThread.start()
+				self.send_call_busy(ipDest= userInfo['ip'], portDest = userInfo['listenPort'])
 
 
-	def call_hold_handler(username):
+	def call_hold_handler(self, username):
 		
 		if self.gui.inCall == True:
 
 			self.pauseEvent.set()
 
 
-	def call_resume_handler(username):
+	def call_resume_handler(self, username):
 
 		if self.gui.inCall == True:
 
 			self.pauseEvent.clear()
 
 
-	def call_end_handler(username):
+	def call_end_handler(self, username):
 
 		if gui.inCall == True:
 
@@ -154,7 +152,7 @@ class ComunicacionTCP:
 		
 	#### FUNCIONES DE RECEPCION DE RESPUESTAS
 
-	def call_accepted_handler(username , destUDPport):
+	def call_accepted_handler(self, username , destUDPport):
 
 		if self.gui.inCall == False:
 
@@ -164,7 +162,12 @@ class ComunicacionTCP:
 			self.gui.infoBox("LLamada establecida", message, parent=None)
 
 			self.gui.inCall = True
-			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myPort)
+
+			self.gui.p2pNick = username
+			self.gui.p2pIP = userInfo['ip']
+			self.gui.p2pListenPort = userInfo['listenPort']
+
+			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.listenPort)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()
@@ -177,11 +180,11 @@ class ComunicacionTCP:
 
 		
 
-	def call_denied_handler(username):
+	def call_denied_handler(self, username):
 		message = "{} no ha aceptado tu llamada.".format(username)
 		self.gui.infoBox("LLamada saliente", message, parent=None)
 
-	def call_busy_handler():
+	def call_busy_handler(self):
 		message = "{} esta ocupado ahora mismo. Intentalo de nuevo mas tarde!".format(username)
 		self.gui.infoBox("LLamada saliente", message, parent=None)
 

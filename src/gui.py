@@ -12,6 +12,7 @@ import sys
 # nuestros ficheros
 import servidorDescubrimiento as server
 import transmisionVideo as tvideo
+import comunicacionTCP as TCP
 
 class Gui:
 
@@ -33,11 +34,9 @@ class Gui:
 	# widgets
 	userList = []
 
-	# webCam management
+	# comunicacionTCP
 
-	webCamEndEvent = None
-	webCamThread = None
-	
+	comtcp = None
 
 	# videoDisplay management
 	videoDisplayThread = None
@@ -45,6 +44,11 @@ class Gui:
 
 	# flag para saber si estamos en llamada o no
 	inCall = False
+	# datos de la persona con la que se esta hablando
+	p2pNick = None
+	p2pIP = None
+	p2pListenPort = None
+
 
 
 	# Cosas que conviene guardar
@@ -82,6 +86,8 @@ class Gui:
 		self.server = server.servidorDescubrimiento(portSD= self.portSD)
 		
 		self.tvideo = tvideo.videoTransmision(self)
+
+		self.comtcp = TCP.comunicacionTCP(gui= self, myIP= self.publicIpAddress, listenPort= self.listenPort, portSD= self.portSD)
 		
 		self.app.setStopFunction(self.checkStop)
 		
@@ -155,9 +161,6 @@ class Gui:
 		else:
 			self.app.errorBox("Error en login", "Intentelo de nuevo")
 
-	def setUsername(username):
-		self.username = username
-
 	def setPwd(pwd):
 		self.pwd = pwd
 
@@ -197,7 +200,6 @@ class Gui:
 
 
 
-	# from : http://code.activestate.com/recipes/578860-setting-up-a-listbox-filter-in-tkinterpython-27/ 
 	# refresca automaticamente
 	def buscarUsuarios(self):
 		search_term = self.app.getEntry("Search: ")
@@ -238,19 +240,11 @@ class Gui:
 						self.colgar()
 				
 				if ip == None:
-					self.app.errorBox("ERROR", "A problem happened while trying to call {}".format(user))
+					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar la llamada".format(user))
 					return 
 
-				self.webCamEndEvent = threading.Event()
-				self.webCamThread = threading.Thread(target = self.tvideo.transmisionWebCam, args = (self.webCamEndEvent,)) 
-				self.webCamThread.setDaemon(True)
-				self.webCamThread.start()
-
-				mensaje = "LLamada al usuario: {} con IP: {} y puerto ... fallida. Funcionalidad por implementar".format(user, ip)
-				self.app.warningBox("Not implemented yet", mensaje)
-
-				# solo en el caso de que todo vaya bien...
-				self.inCall = True			
+				self.comtcp.send_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUsername , username= self.username)
+			
 			else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
 		else:
@@ -260,17 +254,13 @@ class Gui:
 	def colgar(self):
 		
 		if self.inCall == True:
-			self.webCamEndEvent.set()
-			self.inCall = False
-			self.app.warningBox("Not implemented yet", "Funcionalidad colgar no implementada")
+			self.comtcp.send_end(self.p2pIP, self.p2pListenPort, self.username)
  
 			
-
 	def userButtons(self, btnName):
 		if btnName == "Search":
 			self.buscarUsuarios()
 		elif btnName == "RefreshUsers":
-			# cambiar esta funcion para que no "busque"
 			self.actualizarUsuarios()
 		elif btnName == "Logout":
 			self.logout()
@@ -278,6 +268,7 @@ class Gui:
 			self.llamar()
 		elif btnName == "Colgar":
 			self.colgar()
+		#elif btnName == ""
 			
 
 
