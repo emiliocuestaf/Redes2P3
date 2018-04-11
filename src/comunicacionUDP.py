@@ -27,7 +27,7 @@ class comunicacionUDP:
 		self.gui = gui
 		self.listenPort = myPort
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.sock.bind((myip, myPort))
+		self.sock.bind(("0.0.0.0", myPort))
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
 		
