@@ -7,7 +7,7 @@ class comunicacionUDP:
 	gui
 	cap
 	
-	socketEnvio = None
+	sock = None
 	destIp = 0
 	destPort = 0
 	numOrden = 0
@@ -15,6 +15,8 @@ class comunicacionUDP:
 	compresion = 50
 	resW = 640
 	resH = 480
+	
+	cliente = True
 	
 	
 	socketRecepcion = None
@@ -25,16 +27,18 @@ class comunicacionUDP:
 	def __init__(self, gui, myip, myPort):
 		self.gui = gui
 		self.listenPort = myPort
-		self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.serverRecepcion.bind((myip, myPort))
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.sock.bind((myip, myPort))
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
 		
-	def configurarSocketEnvio(self, destIp, destPort):
-		# Comprobar si hay socket ya para cerrarlo??
-		self.socketEnvio = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		
+	# Cliente es un boolean (True si actuamos como cliente, False si como servidor)
+	
+	def configurarSocketEnvio(self, destIp, destPort, cliente):
 		self.destIp = destIp
 		self.destPort = destPort
+		self.cliente = cliente
 		
 	def getFrameFromWebCam(self):
 		ret, frame = self.cap.read()
@@ -59,20 +63,26 @@ class comunicacionUDP:
 
 	def enviarFrameVideo(self, frame):
 	
-		datos = self.numOrden+"#"+time.time()+"#"+self.resW+"x"+self.resH+"#"+self.FPS+"#"+frame
+		datos = ""+self.numOrden+"#"+time.time()+"#"+self.resW+"x"+self.resH+"#"+self.FPS+"#"+frame
 		self.numOrden ++ 
 		# Num maximo de numOrden?? 
-		self.socketEnvio.sendto(datos, (self.destIp, self.destPort)
+		if self.cliente == True:
+			self.socket.sendto(datos, (self.destIp, self.destPort)
+		else:
+			self.socket.sendto(datos, self.destIp)
 
 		
 	# Reinicia los parametros para poder realizar otra llamada
 	def pararTransmision(self):
+	
+	#thread safe??
+	
+		self.socket.close()
 		self.numOrden = 0
-		self.socketEnvio.close()
-		self.socketEnvio = None
+		self.socket = None
 		self.destIp = 0
 		self.destPort = 0
-		self.bufferAux = []
+		self.bufferAux.clear()
 		self.cap.release()
 
 						
@@ -92,8 +102,8 @@ class comunicacionUDP:
 			# Split[0] sera el numOrder, lo que usamos para ordenar la cola
 			
 			self.bufferRecepcion.put((split[0], mensaje))
-				
-					
+		
+		return	
 				
 				#nOrden = parRecibidos[0]
 			#	ts = parRecibidos[1]
@@ -102,9 +112,6 @@ class comunicacionUDP:
 			#	resH = res[1]
 			#	FPS = parRecibidos[3]
 			#	compFrame = parRecibidos[4]
-				
-		
-		# Miramos si estamos rellenando el buffer por primera vez
 		
 
 	def mostrarFrame(self):
@@ -162,6 +169,7 @@ class comunicacionUDP:
 		
 			while pauseEvent.isSet():
 				frame = self.getFrameFromWebCam()
+				self.bufferAux.clear()
 				if endEvent.isSet():
 					break
 				
