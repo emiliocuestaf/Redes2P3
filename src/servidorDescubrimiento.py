@@ -28,7 +28,8 @@ class servidorDescubrimiento:
 		if socketCliente == None:
 			return None
 
-		mensaje = "REGISTER {} {} {} {} V1".format(username, publicIpAddress, portCliente, pwd)
+		# ojo cambiar argumento
+		mensaje = "REGISTER {} {} {} {} V1".format(username, socketCliente.getsockname()[0], portCliente, pwd)
 		socketCliente.send(bytes(mensaje, 'utf-8'))
 		aux = socketCliente.recv(1024)
 

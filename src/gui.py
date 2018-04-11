@@ -153,7 +153,9 @@ class Gui:
 			self.app.setEntry("Contraseña:   ", "", callFunction=False)
 			return 
 
-		state = self.server.solicitarUsername(self.portTCP, self.publicIpAddress, username , pwd)
+		#self.publicIpAddress
+		# arreglar 3er argumento
+		state = self.server.solicitarUsername(self.portTCP, None, username , pwd)
 		if state == "OK":
 			self.username = username
 			self.pwd = pwd

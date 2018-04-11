@@ -213,31 +213,31 @@ class ComunicacionTCP:
 
 		if command == "CALLING":
 
-			self.gui.calling_handler(username= fields[1], srcUDPport= fields[2])
+			self.calling_handler(username= fields[1], srcUDPport= fields[2])
 		
 		elif command == "CALL_HOLD":
 
-			self.gui.call_hold_handler(username= fields[1])
+			self.call_hold_handler(username= fields[1])
 
 		elif command == "CALL_RESUME":
 
-			self.gui.call_resume_handler(username= fields[1])
+			self.call_resume_handler(username= fields[1])
 
 		elif command == "CALL_END":
 
-			self.gui.call_end_handler(username= fields[1])
+			self.call_end_handler(username= fields[1])
 
 		elif command == "CALL_ACCEPTED":
 
-			self.gui.call_accepted_handler(username= fields[1], destUDPport= fields[2])
+			self.call_accepted_handler(username= fields[1], destUDPport= fields[2])
 
 		elif command == "CALL_DENIED":
 
-			self.gui.call_denied_handler(username= fields[1])
+			self.call_denied_handler(username= fields[1])
 
 		elif command == "CALL_BUSY":
 
-			self.gui.call_busy_handler()
+			self.call_busy_handler()
 
 
 	# Diseñada para funcionar en hilo
