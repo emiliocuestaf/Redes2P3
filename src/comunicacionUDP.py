@@ -43,10 +43,11 @@ class comunicacionUDP:
 		
 	def getFrameFromWebCam(self):
 		ret, frame = self.cap.read()
+		frameRes = cv2.resize(frame, (200,300))
 		frame = cv2.resize(frame, (self.resW,self.resH))
 		
 		# Enviamos nuestra imagen a la GUI
-		cv2_im = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+		cv2_im = cv2.cvtColor(frameRes,cv2.COLOR_BGR2RGB)
 		img_tk = ImageTk.PhotoImage(Image.fromarray(cv2_im))
 		self.gui.cambiarFrameWebCam(img_tk)
 		
