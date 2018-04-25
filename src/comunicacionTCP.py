@@ -178,7 +178,7 @@ class ComunicacionTCP:
 			userInfo = self.server.getInfoUsuario(username)
 
 			message = "{} ha aceptado tu llamada!".format(username)
-			self.gui.infoBox("LLamada establecida", message, parent=None)
+			self.gui.app.infoBox("LLamada establecida", message, parent=None)
 
 			self.gui.inCall = True
 
@@ -190,8 +190,8 @@ class ComunicacionTCP:
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()
-			self.webCamThread = threading.Thread(target = self.UDPself.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
-			self.videoReceptionThread = threading.Thread(target = self.UDPself.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
+			self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
+			self.videoReceptionThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
 			self.webCamThread.setDaemon(True)
 			self.videoReceptionThread.setDaemon(True)
 			self.webCamThread.start()

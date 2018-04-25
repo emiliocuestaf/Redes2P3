@@ -43,6 +43,8 @@ class comunicacionUDP:
 		
 	def getFrameFromWebCam(self):
 		ret, frame = self.cap.read()
+		if frame:
+			print("holoQUETALANDAMIS")
 		frameRes = cv2.resize(frame, (200,300))
 		frame = cv2.resize(frame, (self.resW,self.resH))
 		
