@@ -2,6 +2,7 @@ import time
 import queue
 import socket
 import cv2
+import numpy
 from PIL import Image, ImageTk
 
 
@@ -12,7 +13,7 @@ class comunicacionUDP:
 	destIp = 0
 	destPort = 0
 	numOrden = 0
-	FPS = 30
+	FPS = 15
 	compresion = 50
 	resW = 640
 	resH = 480
@@ -43,7 +44,7 @@ class comunicacionUDP:
 		
 	def getFrameFromWebCam(self):
 		ret, frame = self.cap.read()
-		if frame:
+		if ret:
 			print("holoQUETALANDAMIS")
 		frameRes = cv2.resize(frame, (200,300))
 		frame = cv2.resize(frame, (self.resW,self.resH))
@@ -84,8 +85,13 @@ class comunicacionUDP:
 		self.sock = None
 		self.destIp = 0
 		self.destPort = 0
-		self.bufferAux.clear()
-		self.cap.release()
+		while not self.bufferRecepcion.empty():
+			try:
+				self.bufferRecepcion.get(False)
+			except Empty:
+				continue
+			self.bufferRecepcion.task_done()
+		#self.cap.release()
 
 						
 
@@ -97,9 +103,12 @@ class comunicacionUDP:
 			mensaje, ip = self.sock.recvfrom(2048)
 			
 			mensaje = mensaje.decode('utf-8')
+			
+			print("mensaje k koraje")
 
-			if ip != self.destIp:
-				continue
+			#if ip != self.destIp:
+			#	print("DEJEN DE ENVIARNOS PAQUETES INDESEADOS")
+			#	continue
 			
 			split = mensaje.split("#")
 			
@@ -131,9 +140,10 @@ class comunicacionUDP:
 		resW = res[0]
 		resH = res[1]
 	
+		print (encimg)
 		# Descompresión de los datos, una vez recibidos
 		
-		decimg = cv2.imdecode(np.frombuffer(encimg,np.uint8), 1)
+		decimg = cv2.imdecode(numpy.frombuffer(encimg,numpy.uint8), 1)
 		
 		# Conversión de formato para su uso en el GUI
 		
@@ -152,6 +162,7 @@ class comunicacionUDP:
 		while not endEvent.isSet():
 		
 			while not pauseEvent.isSet():
+				print ("Gallu que deberiamos recibir cosas")
 				self.recepcionFrameVideo()
 				self.mostrarFrame()
 				if endEvent.isSet():
@@ -167,17 +178,17 @@ class comunicacionUDP:
 		
 	def transmisionWebCam(self, endEvent, pauseEvent):
 
-		self.cap = cv2.VideoCapture(0)
+		#self.cap = cv2.VideoCapture(0)
 		
 		while not endEvent.isSet():
 		
 			while pauseEvent.isSet():
-				frame = self.getFrameFromWebCam()
+				frame = ImageTk.PhotoImage(Image.open(self.gui.webCamBoxImage, "r")) 
 				self.bufferAux.clear()
 				if endEvent.isSet():
 					break
 				
-			frame = self.getFrameFromWebCam()
+			frame = ImageTk.PhotoImage(Image.open(self.gui.webCamBoxImage, "r")) 
 			self.enviarFrameVideo(frame)
 			
 

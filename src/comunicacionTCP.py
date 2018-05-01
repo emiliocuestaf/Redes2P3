@@ -162,7 +162,7 @@ class ComunicacionTCP:
 
 	def call_end_handler(self, username):
 
-		if gui.inCall == True:
+		if self.gui.inCall == True:
 
 			# Con esto dejamos de mandar video
 			self.endEvent.set()			
