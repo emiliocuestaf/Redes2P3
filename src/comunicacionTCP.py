@@ -203,11 +203,11 @@ class ComunicacionTCP:
 
 	def call_denied_handler(self, username):
 		message = "{} no ha aceptado tu llamada.".format(username)
-		self.gui.infoBox("LLamada saliente", message, parent=None)
+		self.gui.app.infoBox("LLamada saliente", message, parent=None)
 
 	def call_busy_handler(self):
 		message = "{} esta ocupado ahora mismo. Intentalo de nuevo mas tarde!".format(username)
-		self.gui.infoBox("LLamada saliente", message, parent=None)
+		self.gui.app.infoBox("LLamada saliente", message, parent=None)
 
 	#### FUNCIONES DE RECEPCION GENERICAS
 
