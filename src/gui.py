@@ -15,41 +15,52 @@ import transmisionVideo as tvideo
 import comunicacionTCP as TCP
 
 class Gui:
+	"""
+    CLASE: Gui
+    DESCRIPCION: 
+    	Es la interfaza grafica de la aplicacion.
+		Todo lo relacionado con ella y sus cambios se tratan en este modulo.
+    """
 
-	#files 
+	# Files, definidas asi por defecto. 
 	authenticationFile = "authentication.dat"
 	logo = "logo.gif"
 	videoBoxImage = "callicon.gif"
 	webCamBoxImage = "dandelions.gif"
 	
-	#configuracion de colores
+	# Configuracion de colores de la aplicacion. En busqueda de la mejor combinacion...
 	bgColor = "OrangeRed"
 	listColor = "LightGrey"
 
-	# objetos de clase necesarios (inicializados en constructor)
+	# Objetos de clase necesarios (inicializados en constructor).
 	server = None
 	tvideo = None
 	comtcp = None
 
-	# widgets
+	# Util para Widget
 	userList = []
 
 	# Thread que escucha comandos
 	listeningThread = None
 
-	# Flag para saber si estamos en llamada o no
+	# Flag para distinguir si estamos en llamada o no
 	inCall = False
-	# Datos de la persona con la que se esta hablando
-	p2pNick = None
-	p2pIP = None
-	p2pListenPort = None
 
+	# Credenciales del usuario que inicia sesion
 	username = None
 	pwd = None
 
-	# Construction, basic 
+	
 	def __init__(self):
-    	
+		"""
+		FUNCION: Constructor del modulo interfaz grafica
+		ARGS_IN: 
+				-
+		DESCRIPCION:
+				Construye el objeto principal de la aplicacion.
+		ARGS_OUT:
+				-
+		"""
 		self.app = gui("Login Window", "1000x500")
 		self.app.setTitle("Cyder VideoChat")
 		self.app.setIcon(self.logo)
@@ -87,24 +98,46 @@ class Gui:
 		signal.signal(signal.SIGINT, self.signal_handler)
 
 
-	def signal_handler(self, signal, frame):
+	def signal_handler(self, signal, any):
+		"""
+		FUNCION: signal_handler(self, signal, any)
+		ARGS_IN: 
+				* signal: Senial a manejar aqui
+				* any: Argumento necesario para que funcione signal		
+		DESCRIPCION:
+				Realiza un cierre seguro si se utiliza Ctrl+C o el boton X en el limite superior derecho.
+		ARGS_OUT:
+				-
+		"""
 
 		if self.inCall == True:
 				self.colgar()
 		sys.exit(0)
-
-		#self.videoDisplayThread = threading.Thread(target = self.tvideo...)
 	
 	def checkStop(self):
-		
-		self.endEvent.set()
-		if self.inCall == True:
-			self.colgar()
-			
+		"""
+		FUNCION: checkStop(self)
+		ARGS_IN: 
+		DESCRIPCION:
+				Funcion que se ejecuta al pulsar el boton X en el limite superior derecho antes de hacer Crtl C.
+				En nuestro caso, como tenemos un manejador propio de Ctrl C devuelve siempre True.
+		ARGS_OUT:
+				-
+		"""
+
 		return True
 
 
 	def startGUI(self):
+		"""
+		FUNCION: startGUI(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Realiza un intento de login automatico, si no lo consigue, muestra la pantalla de login normal.
+		ARGS_OUT:
+				-
+		"""
+
 		try:
 			self.loginFromFile()
 		except (EnvironmentError, ValueError):
@@ -112,7 +145,14 @@ class Gui:
 			self.app.go()
 
 	def loginFromFile(self): 
-
+		"""
+		FUNCION: loginFromFile(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Itenta realizar un login automatico a partir del archivo authentication.dat.
+		ARGS_OUT:
+				-
+		"""
 		try:
 			d = {}
 			with open("authentication.dat", "r") as f:
@@ -144,6 +184,15 @@ class Gui:
 			self.setLoginLayout()
 
 	def login(self):
+		"""
+		FUNCION: login(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Extrae los credenciales de los campos correspondientes y se comunica con el servidor para verificar 
+			la identidad del usuario. Si todo va bien, muestra la pantalla principal de la aplicacion.
+		ARGS_OUT:
+				-
+		"""
 		username = self.app.getEntry("Usuario:   ")
 		pwd = self.app.getEntry("Contraseña:   ")
 
@@ -163,10 +212,15 @@ class Gui:
 		else:
 			self.app.errorBox("Error en login", "Intentelo de nuevo")
 
-	def setPwd(pwd):
-		self.pwd = pwd
-
 	def logout(self):
+		"""
+		FUNCION: logout(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Sale de la sesion y muestra otra vez la pantalla del login
+		ARGS_OUT:
+				-
+		"""
 		self.username = None
 		self.pwd = None
 		os.remove(self.authenticationFile)
@@ -178,13 +232,30 @@ class Gui:
 
 		
 	def loginButtons(self, btnName):
+		"""
+		FUNCION: loginButtons(self, btnName)
+		ARGS_IN:
+			* btnName: Nombre del boton que se ha pulsado. 
+		DESCRIPCION:
+			Funcion para parsear los eventos de los botones de la pantalla del login
+		ARGS_OUT:
+				-
+		"""
 		if btnName == "Exit":
 		    self.app.stop()
 		if btnName == "Login":
 		    self.login()
 		  
 	def actualizarUsuarios(self):
-		
+		"""
+		FUNCION: actualizarUsuarios(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Funcion que actualiza la lista de usuarios del panel principal- 
+			Para ello, se comunica con el servidor.
+		ARGS_OUT:
+				-
+		"""
 		self.userList = self.server.listarUsuarios()
 
 		self.app.clearListBox("userList", callFunction=True)
@@ -199,10 +270,16 @@ class Gui:
 				self.app.setListItemBg("userList", item, self.listColor)
 
 
-	# refresca automaticamente
 	def buscarUsuarios(self):
+		"""
+		FUNCION: buscarUsuarios(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Search
+		ARGS_OUT:
+				-
+		"""
 		search_term = self.app.getEntry("Search: ")
-		# userList = server.getUsers()
 		
 		self.app.clearListBox("userList", callFunction=True)
 
@@ -213,12 +290,42 @@ class Gui:
 
 
 	def cambiarFrameVideo(self, frame):
+		"""
+		FUNCION: cambiarFrameVideo(self, frame)
+		ARGS_IN: 
+				* frame: Frame que va a sustiuir al anterior.
+		DESCRIPCION:
+			Cambia el frame de video principal por el "frame" pasado como argumento. Es decir, el del medio.
+		ARGS_OUT:
+				-
+		"""
 		self.app.setImageData("videoBox", frame, fmt = 'PhotoImage')
 
 	def cambiarFrameWebCam(self, frame):
+		"""
+		FUNCION: cambiarFrameWebCam(self, frame)
+		ARGS_IN: 
+				* frame: Frame que va a sustiuir al anterior.
+		DESCRIPCION:
+			Cambia el frame de nuestro propio video por el "frame" pasado como argumento. Es decir, el del la derecha.
+		ARGS_OUT:
+				-
+		"""
 		self.app.setImageData("webCamBox", frame, fmt = 'PhotoImage')
 
+
 	def llamar(self):
+		"""
+		FUNCION: llamar(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Realiza una llamada al usuario seleccionado de la lista de Usuarios.
+			Si no hay ninguno, emerge un PopUp avisando.
+			Si ya estas en una llamada, lo mismo.
+			Si por lo que fuera no pudieramos establecer comunicacion con un usuario, tambien nos avisa.
+		ARGS_OUT:
+				-
+		"""
 		users = self.app.getListBox("userList")
 		print("Estas haciendo una llamada1")
 		if users:
@@ -239,9 +346,7 @@ class Gui:
 					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar la llamada".format(user))
 					return 
 
-				print("Estas haciendo una llamada3")
 				self.comtcp.send_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUDP , username= self.username)
-				print("Estas haciendo una llamada34")
 
 			else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
@@ -250,26 +355,56 @@ class Gui:
 
 	
 	def colgar(self):
+		"""
+		FUNCION: colgar(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Si el usuario esta en una llamada, cuelga.
+		ARGS_OUT:
+				-
+		"""
 		
 		if self.inCall == True:
-			print(self.p2pIP)
-			print(self.p2pListenPort)
-			print(self.p2pNick)
-			print(self.username)
-			self.comtcp.send_end(self.p2pIP, self.p2pListenPort, self.username)
+			self.comtcp.send_end(self.comtcp.peerIP, self.comtcp.peerCommandPort, self.username)
  
 	def play(self):
+		"""
+		FUNCION: play(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Si el usuario esta en una llamada pausada, la reanuda.
+		ARGS_OUT:
+				-
+		"""
 		
 		if self.inCall == True:
-			self.comtcp.send_resume(self.p2pIP, self.p2pListenPort, self.username)
+			self.comtcp.send_resume(self.comtcp.peerIP, self.comtcp.peerCommandPort, self.username)
 
 	def pause(self):
+		"""
+		FUNCION: pause(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Si el usuario esta en una llamada,  la pausa.
+		ARGS_OUT:
+				-
+		"""
 		
 		if self.inCall == True:
-			self.comtcp.send_hold(self.p2pIP, self.p2pListenPort, self.username)
+			self.comtcp.send_hold(self.comtcp.peerIP, self.comtcp.peerCommandPort, self.username)
 
 			
 	def userButtons(self, btnName):
+		"""
+		FUNCION: userButtons(self, btnName)
+		ARGS_IN: 
+			* btnName: Nombre del boton que se ha pulsado.
+		DESCRIPCION:
+			Selecciona la funcionalidad del boton correspondiente
+		ARGS_OUT:
+				-
+		"""
+		
 		if btnName == "Search":
 			self.buscarUsuarios()
 		elif btnName == "RefreshUsers":
@@ -287,7 +422,15 @@ class Gui:
 
 
 	def setUsersLayout(self):
-		# Initial conf
+		"""
+		FUNCION: setUsersLayout(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Muestra la pantalla principal de la aplicacion
+		ARGS_OUT:
+				-
+		"""
+		
 		self.app.removeAllWidgets()
 		self.app.removeStatusbar()
 		self.app.setSticky("")
@@ -330,6 +473,14 @@ class Gui:
 
 
 	def setLoginLayout(self):
+		"""
+		FUNCION: setLoginLayout(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Muestra la pantalla de login de la aplicacion
+		ARGS_OUT:
+				-
+		"""
 
 		# Initial conf
 		self.app.removeAllWidgets()

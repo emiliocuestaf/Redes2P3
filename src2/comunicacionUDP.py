@@ -30,6 +30,7 @@ class comunicacionUDP:
 		self.gui = gui
 		self.listenPort = myPort
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.sock.bind(("0.0.0.0", int(myPort)))
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*1)
@@ -186,6 +187,7 @@ class comunicacionUDP:
 				self.mostrarFrame()
 				if endEvent.isSet():
 					break
+	
 		while not self.bufferRecepcion.empty():
 			try:
 				self.bufferRecepcion.get(False)
@@ -193,7 +195,7 @@ class comunicacionUDP:
 				continue
 				
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.videoBoxImage, "r")) 
-		self.gui.cambiarFrameWebCam(frame)
+		self.gui.cambiarFrameVideo(frame)
 		
 		return
 		
