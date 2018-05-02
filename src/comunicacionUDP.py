@@ -190,11 +190,11 @@ class comunicacionUDP:
 				self.mostrarFrame()
 				if endEvent.isSet():
 					break
-		while not self.bufferRecepcion.empty():
-			try:
-				self.bufferRecepcion.get(False)
-			except Empty:
-				continue
+			while not self.bufferRecepcion.empty():
+				try:
+					self.bufferRecepcion.get(False)
+				except Empty:
+					continue
 		
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.videoBoxImage, "r")) 
 		self.gui.cambiarFrameVideo(frame)
@@ -210,7 +210,7 @@ class comunicacionUDP:
 		while not endEvent.isSet():
 		
 			while pauseEvent.isSet():
-				frame = self.getFrameFromWebCam()
+				#frame = self.getFrameFromWebCam()
 				if endEvent.isSet():
 					break
 				
