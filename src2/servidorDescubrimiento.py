@@ -21,7 +21,7 @@ class servidorDescubrimiento:
 		return socketCliente
 
 	
-	def confirmarUsername(self, portCliente, publicIpAddress, username, pwd):
+	def confirmarUsername(self, portCliente, IpAddress, username, pwd):
 	
 		socketCliente = self.conectarSocket()
 
@@ -29,7 +29,7 @@ class servidorDescubrimiento:
 			return None
 
 		# ojo cambiar argumento
-		mensaje = "REGISTER {} {} {} {} V1".format(username, socketCliente.getsockname()[0], portCliente, pwd)
+		mensaje = "REGISTER {} {} {} {} V1".format(username, IpAddress, portCliente, pwd)
 		socketCliente.send(bytes(mensaje, 'utf-8'))
 		aux = socketCliente.recv(1024)
 
@@ -44,9 +44,9 @@ class servidorDescubrimiento:
 		return "OK"
 
 
-	def solicitarUsername(self, portCliente, publicIpAddress, username, pwd):
+	def solicitarUsername(self, portCliente, IpAddress, username, pwd):
 
-		ret = self.confirmarUsername(portCliente, publicIpAddress, username, pwd)
+		ret = self.confirmarUsername(portCliente, IpAddress, username, pwd)
 
 		if ret == "OK":
 

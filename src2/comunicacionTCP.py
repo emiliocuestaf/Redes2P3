@@ -1,5 +1,6 @@
 import cv2
 import socket
+import time
 import threading
 from PIL import Image, ImageTk
 import servidorDescubrimiento as server
@@ -37,6 +38,9 @@ class ComunicacionTCP:
 	endEvent = None
 
 
+	# Variables para el thread que mide el tiempo de llamada
+
+	callTimeThread = None
 
 	def __init__(self, gui, myIP, listenPort, serverPort):
 		"""
@@ -238,7 +242,7 @@ class ComunicacionTCP:
 		"""
 		FUNCION: calling_handler(self, username , srcUDPport)
 		ARGS_IN: 
-				* username: Usuario que manda la peticion
+				* username: Usuario que recibe la peticion
 				* srcUDPPort: Puerto en el que el usuario desea recibir el video,
 		DESCRIPCION:
 				Maneja una peticion de llamada. Pregunta al usuario si quiere aceptarla y remite su respuesta.
@@ -270,6 +274,7 @@ class ComunicacionTCP:
 				self.peerVideoPort = srcUDPport
 				self.peerCommandPort = userInfo['listenPort']
 
+
 				self.gui.inCall = True
 				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.listenPort)
 				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= srcUDPport, cliente= False)
@@ -277,8 +282,17 @@ class ComunicacionTCP:
 				self.pauseEvent = threading.Event()
 				self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
 				self.videoReceptionThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
+				self.callTimeThread = threading.Thread(target = self.callTimeCount, args = (self.endEvent, self.pauseEvent))
+
+
+				self.webCamThread.setDaemon(True)
+				self.videoReceptionThread.setDaemon(True)
+				self.callTimeThread.setDaemon(True)
+
+				# Iniializacion de los threads
 				self.webCamThread.start()
 				self.videoReceptionThread.start()
+				self.callTimeThread.start()
 
 		else:
 
@@ -333,7 +347,6 @@ class ComunicacionTCP:
 			# Con esto dejamos de mandar video
 			self.endEvent.set()			
 			self.gui.inCall = False
-			
 				
 		
 	#### FUNCIONES DE RECEPCION DE RESPUESTAS
@@ -342,7 +355,7 @@ class ComunicacionTCP:
 		"""
 		FUNCION: call_accepted_handler(self, username , destUDPport)
 		ARGS_IN: 
-				* username: Usuario que recibe la peticion
+				* username: Usuario que manda la peticion
 				* destUDPPort: Puerto en el que el otro usuario desea recibir el video
 		DESCRIPCION:
 				Avisa al usuario de que su llamada ha sido aceptada
@@ -359,10 +372,12 @@ class ComunicacionTCP:
 
 			self.gui.inCall = True
 
+			
 			self.peerName = username
 			self.peerIP = userInfo['ip'] 
 			self.peerVideoPort = destUDPport
 			self.peerCommandPort = userInfo['listenPort']
+
 
 			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.listenPort)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
@@ -370,10 +385,16 @@ class ComunicacionTCP:
 			self.pauseEvent = threading.Event()
 			self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
 			self.videoReceptionThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
+			self.callTimeThread = threading.Thread(target = self.callTimeCount, args = (self.endEvent, self.pauseEvent))
+
+
 			self.webCamThread.setDaemon(True)
 			self.videoReceptionThread.setDaemon(True)
+			self.callTimeThread.setDaemon(True)
+			
 			self.webCamThread.start()
 			self.videoReceptionThread.start()
+			self.callTimeThread.start()
 
 		print("Esto no deberia haber ocurrido")
 
@@ -474,3 +495,43 @@ class ComunicacionTCP:
 
 
 	
+
+
+	def callTimeCount(self, endEvent, pauseEvent):
+		"""
+		FUNCION: callTimeCount(self, endEvent, pauseEvent)
+		ARGS_IN: 
+				* endEvent: event que se utilizara para la finalizacion del thread.
+				* pauseEvent: event que se utilizara para parar el cronometro
+		DESCRIPCION:
+				Esta funcion esta diseñada para trabajar en un hilo.
+				Esta funcion actualiza el reloj de tiempo de llamada continuamente.
+		ARGS_OUT:
+				-
+		"""	
+		segs = 00
+		mins = 00
+		hours = 00
+
+		while not endEvent.isSet():
+
+			while pauseEvent.isSet():
+				if endEvent.isSet():
+					break
+			
+			time.sleep(1)
+			segs += 1
+			if segs == 60:
+				segs = 0
+				mins += 1
+				if mins == 60:
+					mins = 0
+					hours += 1
+					if hours == 100:
+						hours = 0;
+
+			count = "Tiempo de llamada:       {:02}:{:02}:{:02}".format(hours, mins, segs)
+			self.gui.app.setStatusbar(count,1)
+
+		count = "No current call"
+		self.gui.app.setStatusbar(count,1)

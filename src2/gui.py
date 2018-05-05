@@ -8,6 +8,7 @@ import threading
 import time
 import signal
 import sys
+import socket
 
 # nuestros ficheros
 import servidorDescubrimiento as SD
@@ -76,10 +77,24 @@ class Gui:
 				    (key, val) = line.split()
 				    d[key] = val
 
+
 			self.portSD = d['portSD']
 			self.portTCP = d['portTCP']
-			self.publicIpAddress = d['IP']
+			self.publicIPEnabled = d['publicIPEnabled']
 			self.portUDP = d['portUDP']
+
+
+			# Si el flag de IP publica esta activado, se toma IP del fichero de configuracion
+			if self.publicIPEnabled == 'Y':
+				self.IPAddress = d['IP']
+
+			else:
+			# Si no esta activo, asumimos que existe una conexion a Internet y cogemos nuestra IP Local
+				testSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				testSock.connect(("8.8.8.8", 80))
+				self.IPAddress = testSock.getsockname()[0]
+				testSock.close()
+
 		except (EnvironmentError, Exception):
 
 			print ("ERROR: El fichero de configuracion no tiene el formato adecuado")
@@ -91,7 +106,7 @@ class Gui:
 
 		self.tvideo = tvideo.videoTransmision(self)
 
-		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.publicIpAddress, listenPort= self.portTCP, serverPort= self.portSD)
+		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD)
 
 		self.app.setStopFunction(self.checkStop)
 		
@@ -168,7 +183,7 @@ class Gui:
 			raise EnvironmentError("No authentication file")
 			return
 			
-		state = self.server.confirmarUsername(self.portTCP, self.publicIpAddress, username, pwd)
+		state = self.server.confirmarUsername(self.portTCP, self.IPAddress, username, pwd)
 		if state == "OK":
 
 			self.username = username
@@ -202,9 +217,8 @@ class Gui:
 			self.app.setEntry("Contraseña:   ", "", callFunction=False)
 			return 
 
-		#self.publicIpAddress
 		# arreglar 3er argumento
-		state = self.server.solicitarUsername(self.portTCP, None, username , pwd)
+		state = self.server.solicitarUsername(self.portTCP, self.IPAddress, username , pwd)
 		if state == "OK":
 			self.username = username
 			self.pwd = pwd
@@ -466,7 +480,7 @@ class Gui:
 		self.app.addStatusbar(fields=3)
 		self.app.setStatusbarBg(self.bgColor)
 		self.app.setStatusbar("FPS=",0)
-		self.app.setStatusbar("00:00:00",1)
+		self.app.setStatusbar("No current call",1)
 		self.app.setStatusbar("...etc",2)
 		
 
