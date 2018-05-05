@@ -28,6 +28,8 @@ class Gui:
 	logo = "logo.gif"
 	videoBoxImage = "callicon.gif"
 	webCamBoxImage = "dandelions.gif"
+
+	videoDir = "/media"
 	
 	# Configuracion de colores de la aplicacion. En busqueda de la mejor combinacion...
 	bgColor = "OrangeRed"
@@ -40,6 +42,7 @@ class Gui:
 
 	# Util para Widget
 	userList = []
+	videoList = []
 
 	# Thread que escucha comandos
 	listeningThread = None
@@ -51,6 +54,10 @@ class Gui:
 	username = None
 	pwd = None
 
+	# flag users/videos
+	# 0 = users
+	# 1 = videos
+	users_or_videos = 0
 	
 	def __init__(self):
 		"""
@@ -284,23 +291,36 @@ class Gui:
 				self.app.setListItemBg("userList", item, self.listColor)
 
 
-	def buscarUsuarios(self):
+	def buscar(self):
 		"""
-		FUNCION: buscarUsuarios(self)
+		FUNCION: buscar(self)
 		ARGS_IN: 
 		DESCRIPCION:
-			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Search
+			Busca de entre la lista mostrada actualmente las coincidencias con lo que esta escrito en el campo Search
 		ARGS_OUT:
 				-
 		"""
+
+
 		search_term = self.app.getEntry("Search: ")
 		
 		self.app.clearListBox("userList", callFunction=True)
 
-		for item in self.userList:
-			if search_term.lower() in item.lower():
-				self.app.addListItem("userList", item)
-				self.app.setListItemBg("userList", item, self.listColor)
+
+		if self.users_or_videos == 0:
+
+			for item in self.userList:
+				if search_term.lower() in item.lower():
+					self.app.addListItem("userList", item)
+					self.app.setListItemBg("userList", item, self.listColor)
+
+		elif self.users_or_videos == 1:
+
+
+			for item in self.videoList:
+				if search_term.lower() in item.lower():
+					self.app.addListItem("userList", item)
+					self.app.setListItemBg("userList", item, self.listColor)
 
 
 	def cambiarFrameVideo(self, frame):
@@ -407,7 +427,80 @@ class Gui:
 		if self.inCall == True:
 			self.comtcp.send_hold(self.comtcp.peerIP, self.comtcp.peerCommandPort, self.username)
 
+
+	def mostrarUsuarios(self):
+
+		self.users_or_videos = 0
+		self.actualizarUsuarios()
+		
+
+
+
+	def mostrarVideos(self):
+
+		self.users_or_videos = 1
+
+
+		# Conseguir los nombres de los videos
+		for file in os.listdir(self.videoDir):
+		    if file.endswith(".mp4") or file.endswith(".mpeg"):
+		    	print (file)
+		    	self.videoList.append(file)
+
+		# Meterlos en la lista 
+
+		self.app.clearListBox("userList", callFunction=True)
+
+		for item in self.videoList:
+			if item != "":
+				self.app.addListItem("userList", item)
+				self.app.setListItemBg("userList", item, self.listColor)
+
+
+	def selecVideo(self):
+		"""
+		FUNCION: selecVideo()
+		ARGS_IN: 
+		DESCRIPCION:
+			Muestra un menu que le permite seleccionar un video de la carpeta media del proyecto.
+			Tambien tendrá que elegir un usuario.
+			Cuando el usuario lo elija, se enviará un video a dicho usuario.
+			El procedimiento es similar al de una llamada, pero en esta ocasion, los dos usuarios veran el 
+			video en su pantalla principal y la secundaria quedara como esta.
+		ARGS_OUT:
+				-
+		"""
 			
+		if self.inCall == False:
+
+			users = self.app.getListBox("userList")
+			
+			if users:
+
+				user = users[0]
+
+			
+				# Parte del despliegue de seleccion de video
+				# Lo que se hace aqui es vaciar la lista de usuarios (luego se recupera) y seleccionar un video
+				# La idea es tener que modificar la interfaz lo mínimo posible
+
+
+
+
+				self.inCall = True
+
+				# Recuperar lista usuarios
+
+
+
+			else:
+				self.app.infoBox("Warning", "Debe seleccionar un usuario antes de elegir esta opcion", parent=None)
+
+
+		else: 
+			self.app.infoBox("Warning", "No puede enviar un video mientras esta en una llamada", parent=None)
+
+
 	def userButtons(self, btnName):
 		"""
 		FUNCION: userButtons(self, btnName)
@@ -420,11 +513,11 @@ class Gui:
 		"""
 		
 		if btnName == "Search":
-			self.buscarUsuarios()
-		elif btnName == "RefreshUsers":
-			self.actualizarUsuarios()
-		elif btnName == "Logout":
-			self.logout()
+			self.buscar()
+		elif btnName == "Mostrar Usuarios":
+			self.mostrarUsuarios()
+		elif btnName == "Mostrar Videos":
+			self.mostrarVideos()
 		elif btnName == "Llamar":
 			self.llamar()
 		elif btnName == "Colgar":
@@ -433,6 +526,8 @@ class Gui:
 			self.play()
 		elif btnName == "Pause":
 			self.pause()
+		elif btnName == "Logout":
+			self.logout()
 
 
 	def setUsersLayout(self):
@@ -466,7 +561,7 @@ class Gui:
 		self.app.setLabelBg("userLabel", self.listColor)
 
 
-		self.app.addButtons(["Search", "RefreshUsers"], self.userButtons, 3, 0)
+		self.app.addButtons(["Mostrar Usuarios", "Mostrar Videos", "Search"], self.userButtons, 3, 0)
 
 		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause"], self.userButtons, 3, 1)
 
