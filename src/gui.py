@@ -78,11 +78,13 @@ class Gui:
 			with open("client.conf", "r") as f:
 				for line in f:
 				    (key, val) = line.split()
+				    print(line)
 				    d[key] = val
 
 
 			self.portSD = d['portSD']
 			self.portTCP = d['portTCP']
+			print(self.portTCP)
 			self.publicIPEnabled = d['publicIPEnabled']
 			self.portUDP = d['portUDP']
 

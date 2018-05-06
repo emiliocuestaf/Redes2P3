@@ -422,7 +422,6 @@ class ComunicacionTCP:
 			self.videoReceptionThread.start()
 			self.callTimeThread.start()
 
-		print("Esto no deberia haber ocurrido")
 
 		
 
