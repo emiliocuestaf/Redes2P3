@@ -38,6 +38,9 @@ class ComunicacionTCP:
 	endEvent = None
 
 
+	waitingVideoAsertion = 0
+
+
 	# Variables para el thread que mide el tiempo de llamada
 
 	callTimeThread = None
@@ -124,6 +127,25 @@ class ComunicacionTCP:
 		"""
 		petition = "CALLING {} {}".format(username, myUDPport)
 		self.send_petition(ipDest, portDest, petition)
+
+	def send_video_calling(self, ipDest, portDest, myUDPport, username, videoPath):
+		"""
+		FUNCION: send_calling(self, ipDest, portDest, myUDPport, username)
+		ARGS_IN: 
+				* ipDest: IP del destinatario de la peticion
+				* portDest: Puerto en el que el destinatario escucha peticiones
+				* myUDPPort: Puerto en el que el usuario que envia la peticion recibe video UDP
+				* username: Nombre del usuario que manda la peticion
+				* videoPath: Path del video que se quiere mandar
+		DESCRIPCION:
+				Envia una peticion CALLING, esta vez orientada a mandar un video
+		ARGS_OUT:
+				-
+		"""
+		petition = "CALLING {} {}".format(username, myUDPport)
+		self.send_petition(ipDest, portDest, petition)
+		self.waitingVideoAsertion = 1
+
 	
 	def send_hold(self, ipDest, portDest, username):
 		"""
@@ -314,6 +336,7 @@ class ComunicacionTCP:
 		"""	
 		if self.gui.inCall == True:
 
+
 			self.pauseEvent.set()
 
 
@@ -346,12 +369,11 @@ class ComunicacionTCP:
 
 			# Con esto dejamos de mandar video
 			self.endEvent.set()			
-			self.gui.inCall = False
-				
+			self.gui.inCall = False	
 		
 	#### FUNCIONES DE RECEPCION DE RESPUESTAS
 
-	def call_accepted_handler(self, username , destUDPport):
+	def call_accepted_handler(self, username ,destUDPport):
 		"""
 		FUNCION: call_accepted_handler(self, username , destUDPport)
 		ARGS_IN: 
@@ -363,6 +385,7 @@ class ComunicacionTCP:
 		ARGS_OUT:
 				-
 		"""	
+
 		if self.gui.inCall == False:
 
 			userInfo = self.server.getInfoUsuario(username)
@@ -378,6 +401,9 @@ class ComunicacionTCP:
 			self.peerVideoPort = destUDPport
 			self.peerCommandPort = userInfo['listenPort']
 
+
+			# TODO, ADAPTAR ESTO A CUANDO WAITINGVIDEO VALE 1 (nos confirman que quieren recibir video)
+			# acuerdate ademas cambair ese flag a 0 en cuanto se reciba el accepted
 
 			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.listenPort)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)

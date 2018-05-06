@@ -54,11 +54,7 @@ class Gui:
 	username = None
 	pwd = None
 
-	# flag users/videos
-	# 0 = users
-	# 1 = videos
-	users_or_videos = 0
-	
+
 	def __init__(self):
 		"""
 		FUNCION: Constructor del modulo interfaz grafica
@@ -90,7 +86,6 @@ class Gui:
 			self.publicIPEnabled = d['publicIPEnabled']
 			self.portUDP = d['portUDP']
 
-
 			# Si el flag de IP publica esta activado, se toma IP del fichero de configuracion
 			if self.publicIPEnabled == 'Y':
 				self.IPAddress = d['IP']
@@ -109,7 +104,6 @@ class Gui:
 
 		
 		self.server = SD.servidorDescubrimiento(portSD= self.portSD)
-		
 
 		self.tvideo = tvideo.videoTransmision(self)
 
@@ -296,32 +290,24 @@ class Gui:
 		FUNCION: buscar(self)
 		ARGS_IN: 
 		DESCRIPCION:
-			Busca de entre la lista mostrada actualmente las coincidencias con lo que esta escrito en el campo Search
+			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Busqueda
 		ARGS_OUT:
 				-
 		"""
 
 
-		search_term = self.app.getEntry("Search: ")
+		Busqueda_term = self.app.getEntry("Busqueda: ")
 		
 		self.app.clearListBox("userList", callFunction=True)
 
 
-		if self.users_or_videos == 0:
 
-			for item in self.userList:
-				if search_term.lower() in item.lower():
-					self.app.addListItem("userList", item)
-					self.app.setListItemBg("userList", item, self.listColor)
+		for item in self.userList:
+			if Busqueda_term.lower() in item.lower():
+				self.app.addListItem("userList", item)
+				self.app.setListItemBg("userList", item, self.listColor)
 
-		elif self.users_or_videos == 1:
-
-
-			for item in self.videoList:
-				if search_term.lower() in item.lower():
-					self.app.addListItem("userList", item)
-					self.app.setListItemBg("userList", item, self.listColor)
-
+	
 
 	def cambiarFrameVideo(self, frame):
 		"""
@@ -428,77 +414,44 @@ class Gui:
 			self.comtcp.send_hold(self.comtcp.peerIP, self.comtcp.peerCommandPort, self.username)
 
 
-	def mostrarUsuarios(self):
-
-		self.users_or_videos = 0
-		self.actualizarUsuarios()
-		
-
-
-
 	def mostrarVideos(self):
 
-		self.users_or_videos = 1
+		path = os.getcwd() + self.videoDir
+		selected = self.app.openBox(title="VideoSelector", dirName=path, fileTypes=[('videos', '*.mp4'), ('videos', '*.mpeg')], asFile=False, parent=None)
 
+		return selected
 
-		# Conseguir los nombres de los videos
-		for file in os.listdir(self.videoDir):
-		    if file.endswith(".mp4") or file.endswith(".mpeg"):
-		    	print (file)
-		    	self.videoList.append(file)
+	def enviarVideo(self):
 
-		# Meterlos en la lista 
+		users = self.app.getListBox("userList")
+		if users:
+			user = users[0]
+			if user != None:
 
-		self.app.clearListBox("userList", callFunction=True)
+				videoPath = self.mostrarVideos()
+				if videoPath == ():
+					return 
 
-		for item in self.videoList:
-			if item != "":
-				self.app.addListItem("userList", item)
-				self.app.setListItemBg("userList", item, self.listColor)
+				infoUser = self.server.getInfoUsuario(user)
+				ip = infoUser['ip']
+				if self.inCall == True:
+					ret = self.app.okBox("ERROR", "Para enviar un video a otro usuario necesitas colgar la videollamada actual", parent=None)
 
+					if ret == False:
+						return
+					elif ret == True:
+						self.colgar()
+				
+				if ip == None:
+					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar envio".format(user))
+					return 
 
-	def selecVideo(self):
-		"""
-		FUNCION: selecVideo()
-		ARGS_IN: 
-		DESCRIPCION:
-			Muestra un menu que le permite seleccionar un video de la carpeta media del proyecto.
-			Tambien tendrá que elegir un usuario.
-			Cuando el usuario lo elija, se enviará un video a dicho usuario.
-			El procedimiento es similar al de una llamada, pero en esta ocasion, los dos usuarios veran el 
-			video en su pantalla principal y la secundaria quedara como esta.
-		ARGS_OUT:
-				-
-		"""
-			
-		if self.inCall == False:
-
-			users = self.app.getListBox("userList")
-			
-			if users:
-
-				user = users[0]
-
-			
-				# Parte del despliegue de seleccion de video
-				# Lo que se hace aqui es vaciar la lista de usuarios (luego se recupera) y seleccionar un video
-				# La idea es tener que modificar la interfaz lo mínimo posible
-
-
-
-
-				self.inCall = True
-
-				# Recuperar lista usuarios
-
-
+				self.comtcp.send_video_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUDP , username= self.username, videoPath= videoPath)
 
 			else:
-				self.app.infoBox("Warning", "Debe seleccionar un usuario antes de elegir esta opcion", parent=None)
-
-
-		else: 
-			self.app.infoBox("Warning", "No puede enviar un video mientras esta en una llamada", parent=None)
+				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
+		else:
+				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
 
 
 	def userButtons(self, btnName):
@@ -512,12 +465,12 @@ class Gui:
 				-
 		"""
 		
-		if btnName == "Search":
+		if btnName == "Buscar":
 			self.buscar()
-		elif btnName == "Mostrar Usuarios":
-			self.mostrarUsuarios()
-		elif btnName == "Mostrar Videos":
-			self.mostrarVideos()
+		elif btnName == "Actualizar":
+			self.actualizarUsuarios()
+		elif btnName == "Enviar Video":
+			self.enviarVideo()
 		elif btnName == "Llamar":
 			self.llamar()
 		elif btnName == "Colgar":
@@ -548,8 +501,8 @@ class Gui:
 
 		self.app.addImage("logo", self.logo , 0,0, compound = None)
 
-		self.app.addLabelEntry("Search: ", 1, 0)
-		self.app.setEntryBg("Search: ", self.listColor)
+		self.app.addLabelEntry("Busqueda: ", 1, 0)
+		self.app.setEntryBg("Busqueda: ", self.listColor)
 
 		self.app.addListBox("userList", self.userList,  2, 0)
 
@@ -561,9 +514,9 @@ class Gui:
 		self.app.setLabelBg("userLabel", self.listColor)
 
 
-		self.app.addButtons(["Mostrar Usuarios", "Mostrar Videos", "Search"], self.userButtons, 3, 0)
+		self.app.addButtons(["Actualizar", "Buscar"], self.userButtons, 3, 0)
 
-		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause"], self.userButtons, 3, 1)
+		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause", "Enviar Video"], self.userButtons, 3, 1)
 
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)

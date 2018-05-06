@@ -28,6 +28,8 @@ class Gui:
 	logo = "logo.gif"
 	videoBoxImage = "callicon.gif"
 	webCamBoxImage = "dandelions.gif"
+
+	videoDir = "/media"
 	
 	# Configuracion de colores de la aplicacion. En busqueda de la mejor combinacion...
 	bgColor = "OrangeRed"
@@ -40,6 +42,7 @@ class Gui:
 
 	# Util para Widget
 	userList = []
+	videoList = []
 
 	# Thread que escucha comandos
 	listeningThread = None
@@ -51,7 +54,7 @@ class Gui:
 	username = None
 	pwd = None
 
-	
+
 	def __init__(self):
 		"""
 		FUNCION: Constructor del modulo interfaz grafica
@@ -83,7 +86,6 @@ class Gui:
 			self.publicIPEnabled = d['publicIPEnabled']
 			self.portUDP = d['portUDP']
 
-
 			# Si el flag de IP publica esta activado, se toma IP del fichero de configuracion
 			if self.publicIPEnabled == 'Y':
 				self.IPAddress = d['IP']
@@ -102,7 +104,6 @@ class Gui:
 
 		
 		self.server = SD.servidorDescubrimiento(portSD= self.portSD)
-		
 
 		self.tvideo = tvideo.videoTransmision(self)
 
@@ -284,24 +285,29 @@ class Gui:
 				self.app.setListItemBg("userList", item, self.listColor)
 
 
-	def buscarUsuarios(self):
+	def buscar(self):
 		"""
-		FUNCION: buscarUsuarios(self)
+		FUNCION: buscar(self)
 		ARGS_IN: 
 		DESCRIPCION:
-			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Search
+			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Busqueda
 		ARGS_OUT:
 				-
 		"""
-		search_term = self.app.getEntry("Search: ")
+
+
+		Busqueda_term = self.app.getEntry("Busqueda: ")
 		
 		self.app.clearListBox("userList", callFunction=True)
 
+
+
 		for item in self.userList:
-			if search_term.lower() in item.lower():
+			if Busqueda_term.lower() in item.lower():
 				self.app.addListItem("userList", item)
 				self.app.setListItemBg("userList", item, self.listColor)
 
+	
 
 	def cambiarFrameVideo(self, frame):
 		"""
@@ -407,7 +413,47 @@ class Gui:
 		if self.inCall == True:
 			self.comtcp.send_hold(self.comtcp.peerIP, self.comtcp.peerCommandPort, self.username)
 
-			
+
+	def mostrarVideos(self):
+
+		path = os.getcwd() + self.videoDir
+		selected = self.app.openBox(title="VideoSelector", dirName=path, fileTypes=[('videos', '*.mp4'), ('videos', '*.mpeg')], asFile=False, parent=None)
+
+		return selected
+
+	def enviarVideo(self):
+
+		users = self.app.getListBox("userList")
+		if users:
+			user = users[0]
+			if user != None:
+
+				videoPath = self.mostrarVideos()
+				if videoPath == ():
+					return 
+
+				infoUser = self.server.getInfoUsuario(user)
+				ip = infoUser['ip']
+				if self.inCall == True:
+					ret = self.app.okBox("ERROR", "Para enviar un video a otro usuario necesitas colgar la videollamada actual", parent=None)
+
+					if ret == False:
+						return
+					elif ret == True:
+						self.colgar()
+				
+				if ip == None:
+					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar envio".format(user))
+					return 
+
+				self.comtcp.send_video_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUDP , username= self.username, videoPath= videoPath)
+
+			else:
+				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
+		else:
+				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
+
+
 	def userButtons(self, btnName):
 		"""
 		FUNCION: userButtons(self, btnName)
@@ -419,12 +465,12 @@ class Gui:
 				-
 		"""
 		
-		if btnName == "Search":
-			self.buscarUsuarios()
-		elif btnName == "RefreshUsers":
+		if btnName == "Buscar":
+			self.buscar()
+		elif btnName == "Actualizar":
 			self.actualizarUsuarios()
-		elif btnName == "Logout":
-			self.logout()
+		elif btnName == "Enviar Video":
+			self.enviarVideo()
 		elif btnName == "Llamar":
 			self.llamar()
 		elif btnName == "Colgar":
@@ -433,6 +479,8 @@ class Gui:
 			self.play()
 		elif btnName == "Pause":
 			self.pause()
+		elif btnName == "Logout":
+			self.logout()
 
 
 	def setUsersLayout(self):
@@ -453,8 +501,8 @@ class Gui:
 
 		self.app.addImage("logo", self.logo , 0,0, compound = None)
 
-		self.app.addLabelEntry("Search: ", 1, 0)
-		self.app.setEntryBg("Search: ", self.listColor)
+		self.app.addLabelEntry("Busqueda: ", 1, 0)
+		self.app.setEntryBg("Busqueda: ", self.listColor)
 
 		self.app.addListBox("userList", self.userList,  2, 0)
 
@@ -466,9 +514,9 @@ class Gui:
 		self.app.setLabelBg("userLabel", self.listColor)
 
 
-		self.app.addButtons(["Search", "RefreshUsers"], self.userButtons, 3, 0)
+		self.app.addButtons(["Actualizar", "Buscar"], self.userButtons, 3, 0)
 
-		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause"], self.userButtons, 3, 1)
+		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause", "Enviar Video"], self.userButtons, 3, 1)
 
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
