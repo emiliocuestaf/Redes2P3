@@ -45,7 +45,7 @@ class ComunicacionTCP:
 
 	callTimeThread = None
 
-	def __init__(self, gui, myIP, listenPort, serverPort):
+	def __init__(self, gui, myIP, listenPort, serverPort, myUDPport):
 		"""
 		FUNCION: Constructor del modulo de comunicacion TCP
 		ARGS_IN: 
@@ -60,6 +60,7 @@ class ComunicacionTCP:
 		"""
 		self.gui = gui
 		self.listenPort = listenPort
+		self.myUDPport = myUDPport
 		self.publicIP = myIP
 		self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socketRecepcion.bind(('0.0.0.0', int(self.listenPort)))
@@ -298,7 +299,7 @@ class ComunicacionTCP:
 
 
 				self.gui.inCall = True
-				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.listenPort)
+				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.myUDPport)
 				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= srcUDPport, cliente= False)
 				self.endEvent = threading.Event()
 				self.pauseEvent = threading.Event()
@@ -405,7 +406,7 @@ class ComunicacionTCP:
 			# TODO, ADAPTAR ESTO A CUANDO WAITINGVIDEO VALE 1 (nos confirman que quieren recibir video)
 			# acuerdate ademas cambair ese flag a 0 en cuanto se reciba el accepted
 
-			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.listenPort)
+			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myUDPport)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()

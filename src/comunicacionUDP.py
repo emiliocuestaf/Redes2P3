@@ -35,8 +35,9 @@ class comunicacionUDP:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         #self.sock.bind(("0.0.0.0", int(myPort)))
         self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        #self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socketRecepcion.bind(("0.0.0.0", int(myPort)))
+        print(int(myPort))
         # Guardamos dos segundos en el buffer
         self.bufferRecepcion = queue.PriorityQueue(self.FPS*1)
 
