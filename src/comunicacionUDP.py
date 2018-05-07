@@ -37,7 +37,6 @@ class comunicacionUDP:
         self.socketRecepcion.settimeout(0.5)
         self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socketRecepcion.bind(("0.0.0.0", int(myPort)))
-        print(int(myPort))
         # Guardamos dos segundos en el buffer
         self.bufferRecepcion = queue.PriorityQueue(self.FPS*1)
 
@@ -57,8 +56,6 @@ class comunicacionUDP:
         
     def getFrameFromWebCam(self):
         ret, frame = self.cap.read()
-        #if ret:
-        #    print("holoQUETALANDAMIS")
         frameRes = cv2.resize(frame, (200,300))
         frame = cv2.resize(frame, (self.resW,self.resH))
         
@@ -72,12 +69,8 @@ class comunicacionUDP:
         resultado, compFrame = cv2.imencode('.jpg',frame,encode_param)
         
         if resultado == False: 
-            print('Error al codificar imagen')
             return None
         compFrame = compFrame.tobytes()
-        
-        #if self.numOrden == 0:
-        #    print (compFrame)
     
         return compFrame    
 
@@ -91,9 +84,7 @@ class comunicacionUDP:
         # Num maximo de numOrden?? 
         if self.cliente == True:
             self.sock.sendto(datos, (self.destIp, int(self.destPort)))
-            #self.sock.sendto(datos.encode('utf-8'), (self.destIp, int(self.destPort)))
         else: # Se deberia meter aqui???
-            #print("Cual es la diferencia" +)
             self.sock.sendto(datos, (self.destIp, int(self.destPort)))
 
         
@@ -118,38 +109,27 @@ class comunicacionUDP:
     # funcion diseñada para estar en un hilo tol rato
     def recepcionFrameVideo(self):
 
-        #print("Una de caxopito:"+str(self.bufferRecepcion.full()))
-    
-        while self.bufferRecepcion.full() == False:
+		if self.bufferRecepcion.empty():
+			flag = 1
+		else:
+			flag = 0
 
-            #if self.socketRecepcion is None:
-            #    print("willyrex")
-            #else:
-            #    print("vegeta777")
+        while flag == 1:
+
             try:
                 mensaje, ip = self.socketRecepcion.recvfrom(204800) #No se que numero poner, pero si le quitas un 0, no cabe
             except:
-                print("cachopaso")
                 break
-
-            #mensaje = bytearray(mensaje)
             
-            #mensaje = mensaje.decode('utf-8')
-            
-            
-            #print("mensaje k koraje")
-            print(ip)
-            print(self.destIp)
             if ip[0] != self.destIp:
-                print("DEJEN DE ENVIARNOS PAQUETES INDESEADOS")
                 continue
             
             split = mensaje.split(b"#")
             
-            #print("NUMERITO POR AQUI: "+str(split[0]))            
-            # Split[0] sera el numOrder, lo que usamos para ordenar la cola
-            
             self.bufferRecepcion.put((int(split[0]), mensaje))
+
+			if self.bufferRecepcion.full() == True:
+				flag = 0
         
         return    
                 
@@ -172,15 +152,11 @@ class comunicacionUDP:
         split = mensaje.split(b"#",4)
         
         
-        #print("Ponme una de bravas:" + str(split[0]) + "\nUna de calamares: "+str(split[1])+"\nUna de jamoncito: "+ str(split[2]) + "\nUna de chipirones: "+str(split[3]))
-        
         res = split[2].split(b"x")
         resW = int(res[0])
         resH = int(res[1])
         
-        #print("Aqui camarero por favor digame la resolucion: "+str(resW)+" "+str(resH))
     
-        #print ("AGUAXIRRI:  "+encimg)
         # Descompresión de los datos, una vez recibidos
         
         # El cuarto parametro del mensaje es la informacion del frame
@@ -188,12 +164,7 @@ class comunicacionUDP:
         
         #encimg = numpy.array(encimg)
         
-        #print(str(encimg))
-        
         decimg = cv2.imdecode(numpy.frombuffer(encimg,numpy.uint8), 1)
-        
-        #if decimg is None:
-        #    print("VAmos a ver tú a que jougas")
         
         # Conversión de formato para su uso en el GUI
         
@@ -208,14 +179,10 @@ class comunicacionUDP:
             
     def recepcionWebCam(self, endEvent, pauseEvent):
         
-        #print("Wenassss rutilofiolosssss")
 
         while not endEvent.isSet():
-
-            #print("Pero vamos haber")
         
             while not pauseEvent.isSet():
-                #print ("Gallu que deberiamos recibir cosas")
                 self.recepcionFrameVideo()
                 self.mostrarFrame()
                 if endEvent.isSet():
@@ -240,7 +207,6 @@ class comunicacionUDP:
         while not endEvent.isSet():
         
             while pauseEvent.isSet():
-                #frame = self.getFrameFromWebCam()
                 if endEvent.isSet():
                     break
                 
