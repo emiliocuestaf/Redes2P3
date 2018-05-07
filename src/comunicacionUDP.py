@@ -38,7 +38,7 @@ class comunicacionUDP:
 		self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.socketRecepcion.bind(("0.0.0.0", int(myPort)))
 		# Guardamos dos segundos en el buffer
-		self.bufferRecepcion = queue.PriorityQueue(self.FPS*1)
+		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
 
 	def cambiarEnviarVideo(self, valor):
 		if (valor != 0) or (valor != 1):
@@ -92,6 +92,7 @@ class comunicacionUDP:
 	def pararTransmision(self):
 
 		self.sock.close()
+		self.socketRecepcion.close()
 		self.numOrden = 0
 		self.sock = None
 		self.destIp = 0
@@ -110,12 +111,14 @@ class comunicacionUDP:
 	def recepcionFrameVideo(self):
 
 		if self.bufferRecepcion.empty():
-			flag = 1
+			flagFirstEmpty = 1
 		else:
-			flag = 0
+			flagFirstEmpty = 0
+
+		flag = 1
 
 		while flag == 1:
-
+							
 			try:
 				mensaje, ip = self.socketRecepcion.recvfrom(204800) #No se que numero poner, pero si le quitas un 0, no cabe
 			except:
@@ -128,7 +131,10 @@ class comunicacionUDP:
 			
 			self.bufferRecepcion.put((int(split[0]), mensaje))
 
-			if self.bufferRecepcion.full() == True:
+			if flagFirstEmpty == 1:
+				if self.bufferRecepcion.full() == True:
+					flag = 0
+			else:
 				flag = 0
 		
 		return    
