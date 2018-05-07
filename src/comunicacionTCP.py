@@ -266,7 +266,7 @@ class ComunicacionTCP:
 		FUNCION: calling_handler(self, username , srcUDPport)
 		ARGS_IN: 
 				* username: Usuario que recibe la peticion
-				* srcUDPPort: Puerto en el que el usuario desea recibir el video,
+				* srcUDPPort: Puerto en el que el otro usuario desea recibir el video,
 		DESCRIPCION:
 				Maneja una peticion de llamada. Pregunta al usuario si quiere aceptarla y remite su respuesta.
 				En caso de que el usuario este ocupado, envia BUSY. 
@@ -297,9 +297,11 @@ class ComunicacionTCP:
 				self.peerVideoPort = srcUDPport
 				self.peerCommandPort = userInfo['listenPort']
 
-
+				print(username)
 				self.gui.inCall = True
+				print("estoy pasandole al constructur {} y {}".format(self.publicIP, self.myUDPport))
 				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.myUDPport)
+				print("estoy pasandole a configurar socket envio {} y {}".format(userInfo['ip'] ,srcUDPport))
 				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= srcUDPport, cliente= False)
 				self.endEvent = threading.Event()
 				self.pauseEvent = threading.Event()
@@ -389,6 +391,7 @@ class ComunicacionTCP:
 
 		if self.gui.inCall == False:
 
+			print(usuario)
 			userInfo = self.server.getInfoUsuario(username)
 
 			message = "{} ha aceptado tu llamada!".format(username)
@@ -406,7 +409,9 @@ class ComunicacionTCP:
 			# TODO, ADAPTAR ESTO A CUANDO WAITINGVIDEO VALE 1 (nos confirman que quieren recibir video)
 			# acuerdate ademas cambair ese flag a 0 en cuanto se reciba el accepted
 
+			print("estoy pasandole al constructur {} y {}".format(self.publicIP, self.myUDPport))
 			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myUDPport)
+			print("estoy pasandole a configurar socket envio {} y {}".format(userInfo['ip'] ,destUDPport))
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()
