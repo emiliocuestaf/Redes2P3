@@ -3,6 +3,7 @@ import queue
 import socket
 import cv2
 import numpy
+from pathlib import Path
 from PIL import Image, ImageTk
 
 
@@ -18,7 +19,9 @@ class comunicacionUDP:
 	resW = 640
 	resH = 480
 
-	localvideo = 0    
+	cap = None
+	
+	videoPath = None
 
 	cliente = True
 	
@@ -40,10 +43,19 @@ class comunicacionUDP:
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
 
-	def cambiarEnviarVideo(self, valor):
-		if (valor != 0) or (valor != 1):
-			return None
-		self.localvideo = valor
+
+
+	# Si envia None, pasa a modo camara
+	
+	def cambiarEnviarVideo(self, rutaVideo):
+		if rutaVideo == None:
+			self.videoPath = None
+			return
+		# Comprobamos si existe
+		video = Path(rutaVideo)
+		if video.is_file():
+			self.videoPath = rutaVideo
+		return
 		
 		
 	# Cliente es un boolean (True si actuamos como cliente, False si como servidor)
@@ -54,7 +66,7 @@ class comunicacionUDP:
 		self.cliente = cliente
 
 		
-	def getFrameFromWebCam(self):
+	def crearFrameVideo(self):
 		ret, frame = self.cap.read()
 		frameRes = cv2.resize(frame, (200,300))
 		frame = cv2.resize(frame, (self.resW,self.resH))
@@ -76,6 +88,8 @@ class comunicacionUDP:
 
 
 	def enviarFrameVideo(self, frame):
+		if frame is None:
+			return
 		datos = "{}#{}#{}x{}#{}#".format(self.numOrden, time.time(), self.resW, self.resH , self.FPS)
 		datos = datos.encode('utf-8')
 		datos = bytearray(datos)
@@ -208,7 +222,10 @@ class comunicacionUDP:
 		
 	def transmisionWebCam(self, endEvent, pauseEvent):
 
-		self.cap = cv2.VideoCapture(0)
+		if self.videoPath is not None:
+			self.cap = cv2.VideoCapture(self.videoPath)
+		else:
+			self.cap = cv2.VideoCapture(0)
 		
 		while not endEvent.isSet():
 		
@@ -216,7 +233,7 @@ class comunicacionUDP:
 				if endEvent.isSet():
 					break
 				
-			frame = self.getFrameFromWebCam()
+			frame = self.crearFrameVideo()
 			self.enviarFrameVideo(frame)
 			
 
