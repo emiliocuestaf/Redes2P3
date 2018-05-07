@@ -109,7 +109,7 @@ class Gui:
 
 		self.tvideo = tvideo.videoTransmision(self)
 
-		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD, myUDPport= self.portUDP)
+		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD)
 
 		self.app.setStopFunction(self.checkStop)
 		
