@@ -38,7 +38,7 @@ class ComunicacionTCP:
 	endEvent = None
 
 
-	waitingVideoAsertion = 0
+	waitingVideoAssertion = 0
 
 
 	# Variables para el thread que mide el tiempo de llamada
@@ -148,7 +148,8 @@ class ComunicacionTCP:
 		"""
 		petition = "CALLING {} {}".format(username, self.myUDPport)
 		self.send_petition(ipDest, portDest, petition)
-		self.waitingVideoAsertion = 1
+		self.waitingVideoAssertion = 1
+		self.videoPath = videoPath
 
 	
 	def send_hold(self, ipDest, portDest, username):
@@ -409,6 +410,16 @@ class ComunicacionTCP:
 
 			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myUDPport)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
+
+			if self.waitingVideoAssertion == 0:
+
+				self.udpcom.cambiarEnviarVideo(rutaVideo= None, hayVideo= 0)
+
+			elif self.waitingVideoAssertion == 1:
+
+				self.udpcom.cambiarEnviarVideo(rutaVideo= self.videoPath, hayVideo= 1)
+				self.waitingVideoAssertion = 0
+
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()
 			self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 

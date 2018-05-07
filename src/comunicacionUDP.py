@@ -47,8 +47,8 @@ class comunicacionUDP:
 
 	# Si envia None, pasa a modo camara
 	
-	def cambiarEnviarVideo(self, rutaVideo):
-		if rutaVideo == None:
+	def cambiarEnviarVideo(self, rutaVideo, hayVideo):
+		if hayVideo == 0:
 			self.videoPath = None
 			return
 		# Comprobamos si existe
