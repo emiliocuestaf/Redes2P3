@@ -45,7 +45,7 @@ class ComunicacionTCP:
 
 	callTimeThread = None
 
-	def __init__(self, gui, myIP, listenPort, serverPort):
+	def __init__(self, gui, myIP, listenPort, serverPort, myUDPport):
 		"""
 		FUNCION: Constructor del modulo de comunicacion TCP
 		ARGS_IN: 
@@ -60,10 +60,14 @@ class ComunicacionTCP:
 		"""
 		self.gui = gui
 		self.listenPort = listenPort
+		self.myUDPport = myUDPport
 		self.publicIP = myIP
+
 		self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.socketRecepcion.bind(('0.0.0.0', int(self.listenPort)))
 		self.socketRecepcion.listen(self.queueSize)
+		
 		self.server = server.servidorDescubrimiento(serverPort)
 		
 
@@ -112,7 +116,7 @@ class ComunicacionTCP:
 		self.socketEnvio.send(bytes(petition, 'utf-8'))
 		self.socketEnvio.close()
 
-	def send_calling(self, ipDest, portDest, myUDPport, username):
+	def send_calling(self, ipDest, portDest, username):
 		"""
 		FUNCION: send_calling(self, ipDest, portDest, myUDPport, username)
 		ARGS_IN: 
@@ -125,10 +129,10 @@ class ComunicacionTCP:
 		ARGS_OUT:
 				-
 		"""
-		petition = "CALLING {} {}".format(username, myUDPport)
+		petition = "CALLING {} {}".format(username, self.myUDPport)
 		self.send_petition(ipDest, portDest, petition)
 
-	def send_video_calling(self, ipDest, portDest, myUDPport, username, videoPath):
+	def send_video_calling(self, ipDest, portDest, username, videoPath):
 		"""
 		FUNCION: send_calling(self, ipDest, portDest, myUDPport, username)
 		ARGS_IN: 
@@ -142,7 +146,7 @@ class ComunicacionTCP:
 		ARGS_OUT:
 				-
 		"""
-		petition = "CALLING {} {}".format(username, myUDPport)
+		petition = "CALLING {} {}".format(username, self.myUDPport)
 		self.send_petition(ipDest, portDest, petition)
 		self.waitingVideoAsertion = 1
 
@@ -201,7 +205,7 @@ class ComunicacionTCP:
 
 	#### FUNCIONES DE ENVIO DE RESPUESTAS
 
-	def send_call_accepted(self, ipDest, portDest, myUDPport, username):
+	def send_call_accepted(self, ipDest, portDest, username):
 		"""
 		FUNCION: send_call_accepted(self, ipDest, portDest, myUDPport, username)
 		ARGS_IN: 
@@ -215,7 +219,7 @@ class ComunicacionTCP:
 				-
 		"""	
 
-		petition = "CALL_ACCEPTED {} {}".format(username, myUDPport)
+		petition = "CALL_ACCEPTED {} {}".format(username, self.myUDPport)
 		self.send_petition(ipDest, portDest, petition)
 	
 
@@ -260,12 +264,12 @@ class ComunicacionTCP:
 	###############################################
 
 
-	def calling_handler(self, username , srcUDPport):
+	def calling_handler(self, username, destUDPport):
 		"""
 		FUNCION: calling_handler(self, username , srcUDPport)
 		ARGS_IN: 
 				* username: Usuario que recibe la peticion
-				* srcUDPPort: Puerto en el que el usuario desea recibir el video,
+				* destUDPPort: Puerto en el que el usuario que llama desea recibir el video,
 		DESCRIPCION:
 				Maneja una peticion de llamada. Pregunta al usuario si quiere aceptarla y remite su respuesta.
 				En caso de que el usuario este ocupado, envia BUSY. 
@@ -289,17 +293,16 @@ class ComunicacionTCP:
 
 			elif ret == True:
 				
-				self.send_call_accepted(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , myUDPport =  self.listenPort, username = self.gui.username)					
+				self.send_call_accepted(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , username = self.gui.username)					
 
 				self.peerName = username
 				self.peerIP = userInfo['ip'] 
 				self.peerVideoPort = srcUDPport
 				self.peerCommandPort = userInfo['listenPort']
 
-
 				self.gui.inCall = True
-				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.listenPort)
-				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= srcUDPport, cliente= False)
+				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.myUDPport)
+				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= False)
 				self.endEvent = threading.Event()
 				self.pauseEvent = threading.Event()
 				self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
@@ -373,12 +376,12 @@ class ComunicacionTCP:
 		
 	#### FUNCIONES DE RECEPCION DE RESPUESTAS
 
-	def call_accepted_handler(self, username ,destUDPport):
+	def call_accepted_handler(self, username , destUDPport):
 		"""
 		FUNCION: call_accepted_handler(self, username , destUDPport)
 		ARGS_IN: 
 				* username: Usuario que manda la peticion
-				* destUDPPort: Puerto en el que el otro usuario desea recibir el video
+				* destUDPPort: Puerto en el que el usuario que recibe la llamada desea recibir el video
 		DESCRIPCION:
 				Avisa al usuario de que su llamada ha sido aceptada
 				Inicia la transmision y recepcion de video con un peer.
@@ -401,11 +404,10 @@ class ComunicacionTCP:
 			self.peerVideoPort = destUDPport
 			self.peerCommandPort = userInfo['listenPort']
 
-
 			# TODO, ADAPTAR ESTO A CUANDO WAITINGVIDEO VALE 1 (nos confirman que quieren recibir video)
 			# acuerdate ademas cambair ese flag a 0 en cuanto se reciba el accepted
 
-			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.listenPort)
+			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myUDPport)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()
@@ -467,7 +469,7 @@ class ComunicacionTCP:
 
 		if command == "CALLING":
 
-			self.calling_handler(username= fields[1], srcUDPport= fields[2])
+			self.calling_handler(username= fields[1], destUDPport= fields[2])
 		
 		elif command == "CALL_HOLD":
 

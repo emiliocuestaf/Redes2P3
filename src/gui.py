@@ -109,7 +109,7 @@ class Gui:
 
 		self.tvideo = tvideo.videoTransmision(self)
 
-		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD)
+		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD, myUDPport= self.portUDP)
 
 		self.app.setStopFunction(self.checkStop)
 		
@@ -368,7 +368,7 @@ class Gui:
 					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar la llamada".format(user))
 					return 
 
-				self.comtcp.send_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUDP , username= self.username)
+				self.comtcp.send_calling(ipDest= ip, portDest= infoUser['listenPort'] , username= self.username)
 
 			else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
@@ -448,7 +448,7 @@ class Gui:
 					self.app.errorBox("ERROR", "Hay un problema con el usuario: {} .\n No se puede realizar envio".format(user))
 					return 
 
-				self.comtcp.send_video_calling(ipDest= ip, portDest= infoUser['listenPort'] , myUDPport= self.portUDP , username= self.username, videoPath= videoPath)
+				self.comtcp.send_video_calling(ipDest= ip, portDest= infoUser['listenPort'] , username= self.username, videoPath= videoPath)
 
 			else:
 				self.app.errorBox("ERROR", "Seleccione un usuario de la lista, por favor")
