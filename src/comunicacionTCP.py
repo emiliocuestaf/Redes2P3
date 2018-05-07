@@ -110,7 +110,7 @@ class ComunicacionTCP:
 			self.socketEnvio.settimeout(None)
 		
 		except (OSError, ConnectionRefusedError):
-			print("No se ha podido establecer una conexion con ese usuario") 
+			self.gui.app.errorBox("ERROR", "No se ha podido establecer una conexion con ese usuario") 
 			return "ERROR"
 
 		self.socketEnvio.send(bytes(petition, 'utf-8'))
@@ -297,7 +297,7 @@ class ComunicacionTCP:
 
 				self.peerName = username
 				self.peerIP = userInfo['ip'] 
-				self.peerVideoPort = srcUDPport
+				self.peerVideoPort = destUDPport
 				self.peerCommandPort = userInfo['listenPort']
 
 				self.gui.inCall = True

@@ -33,8 +33,8 @@ class comunicacionUDP:
         self.listenPort = myPort
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #self.sock.bind(("0.0.0.0", int(myPort)))
         self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socketRecepcion.settimeout(0.5)
         self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socketRecepcion.bind(("0.0.0.0", int(myPort)))
         print(int(myPort))
@@ -83,21 +83,18 @@ class comunicacionUDP:
 
 
     def enviarFrameVideo(self, frame):
-        print("enviarFrame")
         datos = "{}#{}#{}x{}#{}#".format(self.numOrden, time.time(), self.resW, self.resH , self.FPS)
         datos = datos.encode('utf-8')
         datos = bytearray(datos)
         datos = datos + frame
         self.numOrden += 1
         # Num maximo de numOrden?? 
-        print("Antes de enviar")
         if self.cliente == True:
             self.sock.sendto(datos, (self.destIp, int(self.destPort)))
             #self.sock.sendto(datos.encode('utf-8'), (self.destIp, int(self.destPort)))
         else: # Se deberia meter aqui???
             #print("Cual es la diferencia" +)
             self.sock.sendto(datos, (self.destIp, int(self.destPort)))
-        print("Despues de enviar")
 
         
     # Reinicia los parametros para poder realizar otra llamada
@@ -129,19 +126,23 @@ class comunicacionUDP:
             #    print("willyrex")
             #else:
             #    print("vegeta777")
-            print("Antes de recepcion")
-            mensaje, ip = self.socketRecepcion.recvfrom(204800) #No se que numero poner, pero si le quitas un 0, no cabe
-            print("Despues de recepcion")
+            try:
+                mensaje, ip = self.socketRecepcion.recvfrom(204800) #No se que numero poner, pero si le quitas un 0, no cabe
+            except:
+                print("cachopaso")
+                break
+
             #mensaje = bytearray(mensaje)
             
             #mensaje = mensaje.decode('utf-8')
             
             
             #print("mensaje k koraje")
-
-            #if ip != self.destIp:
-            #    print("DEJEN DE ENVIARNOS PAQUETES INDESEADOS")
-            #    continue
+            print(ip)
+            print(self.destIp)
+            if ip[0] != self.destIp:
+                print("DEJEN DE ENVIARNOS PAQUETES INDESEADOS")
+                continue
             
             split = mensaje.split(b"#")
             
@@ -162,6 +163,9 @@ class comunicacionUDP:
         
 
     def mostrarFrame(self):
+
+        if self.bufferRecepcion.empty():
+            return
     
         mensaje = self.bufferRecepcion.get()[1]
         
