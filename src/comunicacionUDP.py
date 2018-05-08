@@ -75,13 +75,12 @@ class comunicacionUDP:
 		self.destIp = destIp
 		self.destPort = destPort
 		self.cliente = cliente
-
+ 
 		
-	def crearFrameVideo(self, endEvent):
+	def crearFrameVideo(self):
 		ret, frame = self.cap.read()
 		if (frame is None) or (ret == False):
-			endEvent.set()
-			self.gui.inCall = False
+			self.gui.envisrFinalVideo()
 			return None
 			
 		frameRes = cv2.resize(frame, (200,300))
@@ -252,7 +251,7 @@ class comunicacionUDP:
 				if endEvent.isSet():
 					break
 				
-			frame = self.crearFrameVideo(endEvent)
+			frame = self.crearFrameVideo()
 			self.enviarFrameVideo(frame)
 			
 
