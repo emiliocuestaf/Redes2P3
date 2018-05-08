@@ -68,6 +68,7 @@ class Gui:
 		self.app.setIcon(self.logo)
 		self.app.setBg(self.bgColor)
 		self.app.setResizable(canResize=False)
+
 		self.username = None
 		self.pwd = None
 
@@ -102,9 +103,8 @@ class Gui:
 			print ("ERROR: El fichero de configuracion no tiene el formato adecuado")
 			return 
 
-		
+				
 		self.server = SD.servidorDescubrimiento(portSD= self.portSD)
-
 
 		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD, myUDPport= self.portUDP)
 

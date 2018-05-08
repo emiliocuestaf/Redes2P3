@@ -51,7 +51,7 @@ class comunicacionUDP:
 			cadena = "FPS = " + str(self.FPS)
 			self.gui.app.setStatusbar(cadena,0)
 		if self.cap is not None:
-			self.cap.set(cv2.cv.CV_CAP_PROP_FPS, self.FPS)
+			self.cap.set(cv2.CAP_PROP_FPS, self.FPS)
 
 
 
@@ -237,7 +237,7 @@ class comunicacionUDP:
 		else:
 			self.cap = cv2.VideoCapture(0)
 
-		self.cap.set(cv2.cv.CV_CAP_PROP_FPS, self.FPS)
+		self.cap.set(cv2.CAP_PROP_FPS, self.FPS)
 		
 		while not endEvent.isSet():
 		
