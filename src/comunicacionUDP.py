@@ -14,10 +14,10 @@ class comunicacionUDP:
 	destIp = 0
 	destPort = 0
 	numOrden = 0
-	FPS = 10
+	FPS = 20
 	compresion = 50
-	resW = 640
-	resH = 480
+	resW = 500
+	resH = 400
 
 	cap = None
 	
@@ -42,6 +42,16 @@ class comunicacionUDP:
 		self.socketRecepcion.bind(("0.0.0.0", int(myPort)))
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
+		cadena = "FPS = " + str(self.FPS)
+		self.gui.app.setStatusbar(cadena,0)
+
+	def cambiarFPS(valor):
+		if int(valor) > 0:
+			self.FPS = int(valor)
+			cadena = "FPS = " + str(self.FPS)
+			self.gui.app.setStatusbar(cadena,0)
+		if self.cap is not None:
+			self.cap.set(cv2.cv.CV_CAP_PROP_FPS, self.FPS)
 
 
 
@@ -226,6 +236,8 @@ class comunicacionUDP:
 			self.cap = cv2.VideoCapture(self.videoPath)
 		else:
 			self.cap = cv2.VideoCapture(0)
+
+		self.cap.set(cv2.cv.CV_CAP_PROP_FPS, self.FPS)
 		
 		while not endEvent.isSet():
 		
