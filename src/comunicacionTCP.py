@@ -130,7 +130,9 @@ class ComunicacionTCP:
 				-
 		"""
 		petition = "CALLING {} {}".format(username, self.myUDPport)
+		self.gui.app.setStatusbar("LLamando...",2)
 		self.send_petition(ipDest, portDest, petition)
+
 
 	def send_video_calling(self, ipDest, portDest, username, videoPath):
 		"""
@@ -147,6 +149,7 @@ class ComunicacionTCP:
 				-
 		"""
 		petition = "CALLING {} {}".format(username, self.myUDPport)
+		self.gui.app.setStatusbar("LLamando...",2)
 		self.send_petition(ipDest, portDest, petition)
 		self.waitingVideoAssertion = 1
 		self.videoPath = videoPath
@@ -165,9 +168,10 @@ class ComunicacionTCP:
 				-
 		"""
 		petition = "CALL_HOLD {}".format(username)
+		self.gui.app.setStatusbar("Llamada pausada...",2)
 		self.send_petition(ipDest, portDest, petition)
 		self.pauseEvent.set()
-	
+
 
 	def send_resume(self, ipDest, portDest, username):
 		"""
@@ -182,8 +186,10 @@ class ComunicacionTCP:
 				-
 		"""
 		petition = "CALL_RESUME {}".format(username)
+		self.gui.app.setStatusbar("En llamada",2)
 		self.send_petition(ipDest, portDest, petition)
 		self.pauseEvent.clear()
+
 
 	def send_end(self, ipDest, portDest, username):
 		"""
@@ -199,10 +205,10 @@ class ComunicacionTCP:
 		"""
 
 		petition = "CALL_END {}".format(username)
+		self.gui.app.setStatusbar("",2)
 		self.send_petition(ipDest, portDest, petition)
 		self.endEvent.set()
 		self.gui.inCall = False
-
 
 	#### FUNCIONES DE ENVIO DE RESPUESTAS
 
@@ -221,8 +227,9 @@ class ComunicacionTCP:
 		"""	
 
 		petition = "CALL_ACCEPTED {} {}".format(username, self.myUDPport)
+		self.gui.app.setStatusbar("En llamada",2)
 		self.send_petition(ipDest, portDest, petition)
-	
+
 
 	def send_call_denied(self, ipDest, portDest, username):
 		"""
@@ -293,7 +300,8 @@ class ComunicacionTCP:
 				self.send_call_denied(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , username = self.gui.username)
 
 			elif ret == True:
-				
+
+				self.gui.app.setStatusbar("En llamada",2)
 				self.send_call_accepted(ipDest = userInfo['ip'], portDest = userInfo['listenPort'] , username = self.gui.username)					
 
 				self.peerName = username
@@ -340,7 +348,7 @@ class ComunicacionTCP:
 		"""	
 		if self.gui.inCall == True:
 
-
+			self.gui.app.setStatusbar("Llamada pausada",2)
 			self.pauseEvent.set()
 
 
@@ -356,6 +364,7 @@ class ComunicacionTCP:
 		"""	
 		if self.gui.inCall == True:
 
+			self.gui.app.setStatusbar("En llamada",2)
 			self.pauseEvent.clear()
 
 
@@ -372,6 +381,7 @@ class ComunicacionTCP:
 		if self.gui.inCall == True:
 
 			# Con esto dejamos de mandar video
+			self.gui.app.setStatusbar("",2)
 			self.endEvent.set()			
 			self.gui.inCall = False	
 		
@@ -396,6 +406,8 @@ class ComunicacionTCP:
 
 			message = "{} ha aceptado tu llamada!".format(username)
 			self.gui.app.infoBox("LLamada establecida", message, parent=None)
+
+			self.gui.app.setStatusbar("En llamada",2)
 
 			self.gui.inCall = True
 
@@ -450,6 +462,8 @@ class ComunicacionTCP:
 		"""	
 		message = "{} no ha aceptado tu llamada.".format(username)
 		self.gui.app.infoBox("LLamada saliente", message, parent=None)
+		self.gui.app.setStatusbar("",2)
+
 
 	def call_busy_handler(self):
 		"""
@@ -462,6 +476,8 @@ class ComunicacionTCP:
 		"""	
 		message = "El receptor de esta llamada esta ocupado ahora mismo. Intentalo de nuevo mas tarde!"
 		self.gui.app.infoBox("LLamada saliente", message, parent=None)
+		self.gui.app.setStatusbar("",2)
+
 
 	#### FUNCIONES DE RECEPCION GENERICAS
 

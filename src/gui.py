@@ -528,10 +528,8 @@ class Gui:
 		self.app.setStatusbarBg(self.bgColor)
 		self.app.setStatusbar("FPS=",0)
 		self.app.setStatusbar("No current call",1)
-		self.app.setStatusbar("...etc",2)
+		self.app.setStatusbar("...",2)
 		
-
-
 
 	def setLoginLayout(self):
 		"""
