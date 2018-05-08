@@ -14,12 +14,13 @@ class comunicacionUDP:
 	destIp = 0
 	destPort = 0
 	numOrden = 0
-	FPS = 20
+	FPS = 200
 	compresion = 50
 	resW = 500
 	resH = 400
 
 	cap = None
+	gui = None
 	
 	videoPath = None
 
@@ -51,7 +52,7 @@ class comunicacionUDP:
 			cadena = "FPS = " + str(self.FPS)
 			self.gui.app.setStatusbar(cadena,0)
 		if self.cap is not None:
-			self.cap.set(cv2.cv.CV_CAP_PROP_FPS, self.FPS)
+			self.cap.set(cv2.CAP_PROP_FPS, self.FPS)
 
 
 
@@ -76,8 +77,13 @@ class comunicacionUDP:
 		self.cliente = cliente
 
 		
-	def crearFrameVideo(self):
+	def crearFrameVideo(self, endEvent):
 		ret, frame = self.cap.read()
+		if (frame is None) or (ret == False):
+			endEvent.set()
+			self.gui.inCall = False
+			return None
+			
 		frameRes = cv2.resize(frame, (200,300))
 		frame = cv2.resize(frame, (self.resW,self.resH))
 		
@@ -128,7 +134,8 @@ class comunicacionUDP:
 				continue
 			self.bufferRecepcion.task_done()
 		self.cap.release()
-
+		cadena = "FPS = "
+		self.gui.app.setStatusbar(cadena,0)
 						
 
 	# funcion diseñada para estar en un hilo tol rato
@@ -237,7 +244,7 @@ class comunicacionUDP:
 		else:
 			self.cap = cv2.VideoCapture(0)
 
-		self.cap.set(cv2.cv.CV_CAP_PROP_FPS, self.FPS)
+		self.cap.set(cv2.CAP_PROP_FPS, self.FPS)
 		
 		while not endEvent.isSet():
 		
@@ -245,7 +252,7 @@ class comunicacionUDP:
 				if endEvent.isSet():
 					break
 				
-			frame = self.crearFrameVideo()
+			frame = self.crearFrameVideo(endEvent)
 			self.enviarFrameVideo(frame)
 			
 
