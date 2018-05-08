@@ -80,7 +80,7 @@ class comunicacionUDP:
 	def crearFrameVideo(self):
 		ret, frame = self.cap.read()
 		if (frame is None) or (ret == False):
-			self.gui.envisrFinalVideo()
+			self.gui.colgar()
 			return None
 			
 		frameRes = cv2.resize(frame, (200,300))

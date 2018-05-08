@@ -428,7 +428,7 @@ class Gui:
 			if user != None:
 
 				videoPath = self.mostrarVideos()
-				if videoPath == ():
+				if videoPath == () or videoPath == "" :
 					return 
 
 				infoUser = self.server.getInfoUsuario(user)
