@@ -2,7 +2,6 @@ from appJar import gui
 from PIL import Image, ImageTk
 
 import tkinter
-import cv2
 import os
 import threading
 import time
@@ -12,7 +11,6 @@ import socket
 
 # nuestros ficheros
 import servidorDescubrimiento as SD
-import transmisionVideo as tvideo
 import comunicacionTCP as TCP
 
 class Gui:
@@ -95,7 +93,7 @@ class Gui:
 			else:
 			# Si no esta activo, asumimos que existe una conexion a Internet y cogemos nuestra IP Local
 				testSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				testSock.connect(("8.8.8.8", 80))
+				testSock.connect(("vega.ii.uam.es", 8000))
 				self.IPAddress = testSock.getsockname()[0]
 				testSock.close()
 
@@ -107,7 +105,6 @@ class Gui:
 		
 		self.server = SD.servidorDescubrimiento(portSD= self.portSD)
 
-		self.tvideo = tvideo.videoTransmision(self)
 
 		self.comtcp = TCP.ComunicacionTCP(gui= self, myIP= self.IPAddress, listenPort= self.portTCP, serverPort= self.portSD, myUDPport= self.portUDP)
 
