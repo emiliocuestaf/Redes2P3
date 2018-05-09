@@ -71,20 +71,6 @@ class ComunicacionTCP:
 		self.server = server.servidorDescubrimiento(serverPort)
 		
 
-	# TODO: Borrar esta funcion? SI sirve para algo, esta mal jajajaj
-	def close_listeningSocket(self):
-		"""
-		FUNCION: close_listeningSocket(self)
-		ARGS_IN: 
-				-
-		DESCRIPCION:
-				Cierra el socket desde el que se escuchaban los comandos de comunicacion P2P
-				y las respuestas del servidor.
-		ARGS_OUT:
-				-
-		"""
-		self.listenPort.close()
-
 	#### FUNCIONES DE ENVIO DE PETICIONES
 
 	def send_petition(self, ipDest, portDest , petition):
@@ -97,30 +83,31 @@ class ComunicacionTCP:
 		DESCRIPCION:
 				Envia peticion a ipDest|portDest
 		ARGS_OUT:
-				-
+				* return "ERROR" if there was a problem in connection
+				* 		 "OK" if not
 		"""
 
-		print(petition)
+		print("Sending "+ petition)
 
 		self.socketEnvio = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print(ipDest)
-		print(portDest)
+		
 		try: 
 			self.socketEnvio.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			self.socketEnvio.settimeout(5)
-			print("antesdelconnect")
 			self.socketEnvio.connect((ipDest, int(portDest)))
-			print("despuesdelconnect")
 			self.socketEnvio.settimeout(None)
 		
 		except (OSError, ConnectionRefusedError):
-			self.gui.app.errorBox("ERROR", "No se ha podido establecer una conexion con ese usuario") 
+			self.gui.app.errorBox("ERROR", "Error de conexion")
+			self.gui.app.setStatusbar("",2)
+			if self.gui.inCall == True:
+				self.endEvent.set()
+				self.gui.inCall = False
 			return "ERROR"
 
-		print("antesdelsend")
 		self.socketEnvio.send(petition.encode('utf-8'))
-		print("despuesdelsend")
 		self.socketEnvio.close()
+		return "OK"
 
 	def send_calling(self, ipDest, portDest, username):
 		"""
@@ -137,8 +124,9 @@ class ComunicacionTCP:
 		"""
 		petition = "CALLING {} {}".format(username, self.myUDPport)
 		self.gui.app.setStatusbar("LLamando...",2)
-		self.send_petition(ipDest, portDest, petition)
-
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 
 	def send_video_calling(self, ipDest, portDest, username, videoPath):
 		"""
@@ -156,7 +144,9 @@ class ComunicacionTCP:
 		"""
 		petition = "CALLING {} {}".format(username, self.myUDPport)
 		self.gui.app.setStatusbar("LLamando...",2)
-		self.send_petition(ipDest, portDest, petition)
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 		self.waitingVideoAssertion = 1
 		self.videoPath = videoPath
 
@@ -175,7 +165,9 @@ class ComunicacionTCP:
 		"""
 		petition = "CALL_HOLD {}".format(username)
 		self.gui.app.setStatusbar("Llamada pausada...",2)
-		self.send_petition(ipDest, portDest, petition)
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 		self.pauseEvent.set()
 
 
@@ -193,7 +185,9 @@ class ComunicacionTCP:
 		"""
 		petition = "CALL_RESUME {}".format(username)
 		self.gui.app.setStatusbar("En llamada",2)
-		self.send_petition(ipDest, portDest, petition)
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 		self.pauseEvent.clear()
 
 
@@ -212,7 +206,9 @@ class ComunicacionTCP:
 
 		petition = "CALL_END {}".format(username)
 		self.gui.app.setStatusbar("",2)
-		self.send_petition(ipDest, portDest, petition)
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 		self.endEvent.set()
 		self.gui.inCall = False
 
@@ -234,8 +230,9 @@ class ComunicacionTCP:
 
 		petition = "CALL_ACCEPTED {} {}".format(username, self.myUDPport)
 		self.gui.app.setStatusbar("En llamada",2)
-		self.send_petition(ipDest, portDest, petition)
-
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 
 	def send_call_denied(self, ipDest, portDest, username):
 		"""
@@ -250,8 +247,9 @@ class ComunicacionTCP:
 				-
 		"""	
 		petition = "CALL_DENIED {}".format(username)
-		self.send_petition(ipDest, portDest, petition)
-	
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 
 	def send_call_busy(self, ipDest, portDest):
 		"""
@@ -265,8 +263,9 @@ class ComunicacionTCP:
 				-
 		"""	
 		petition = "CALL_BUSY"
-		self.send_petition(ipDest, portDest, petition)
-
+		ret = self.send_petition(ipDest, portDest, petition)
+		if ret == "ERROR":
+			return
 
 
 	###############################################
@@ -290,8 +289,6 @@ class ComunicacionTCP:
 		ARGS_OUT:
 				-
 		"""	
-
-		print("Estas recibiendo una llamada")
 
 		userInfo = self.server.getInfoUsuario(username)
 
@@ -394,6 +391,7 @@ class ComunicacionTCP:
 			self.endEvent.set()			
 			self.gui.inCall = False	
 		
+
 	#### FUNCIONES DE RECEPCION DE RESPUESTAS
 
 	def call_accepted_handler(self, username , destUDPport):
@@ -425,9 +423,6 @@ class ComunicacionTCP:
 			self.peerIP = userInfo['ip'] 
 			self.peerVideoPort = destUDPport
 			self.peerCommandPort = userInfo['listenPort']
-
-			# TODO, ADAPTAR ESTO A CUANDO WAITINGVIDEO VALE 1 (nos confirman que quieren recibir video)
-			# acuerdate ademas cambair ese flag a 0 en cuanto se reciba el accepted
 
 			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myUDPport)
 			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
@@ -556,7 +551,7 @@ class ComunicacionTCP:
 			text = conn.recv(1024)
 
 			if text: 
-				print(text)
+				print("Recibido " + text)
 				self.parse_petition(text.decode('utf-8'))
 
 

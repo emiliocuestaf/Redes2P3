@@ -63,12 +63,11 @@ class Gui:
 		ARGS_OUT:
 				-
 		"""
-		self.app = gui("Login Window", "1000x600")
+		self.app = gui("Login Window", "1000x500")
 		self.app.setTitle("Cyder VideoChat")
 		self.app.setIcon(self.logo)
 		self.app.setBg(self.bgColor)
 		self.app.setResizable(canResize=False)
-
 		self.username = None
 		self.pwd = None
 
@@ -77,13 +76,11 @@ class Gui:
 			with open("client.conf", "r") as f:
 				for line in f:
 				    (key, val) = line.split()
-				    print(line)
 				    d[key] = val
 
 
 			self.portSD = d['portSD']
 			self.portTCP = d['portTCP']
-			print(self.portTCP)
 			self.publicIPEnabled = d['publicIPEnabled']
 			self.portUDP = d['portUDP']
 
@@ -273,8 +270,9 @@ class Gui:
 		self.userList = self.server.listarUsuarios()
 
 		self.app.clearListBox("userList", callFunction=True)
-
-		# nos eliminamos de la lista de usuarios a nosotros mismos para evitar problemas
+		self.app.clearEntry("Busqueda: ")
+		
+		# Nos eliminamos de la lista de usuarios a nosotros mismos para evitar problemas
 		if self.username != None and self.username != "":
 			self.userList.remove(self.username)
 
@@ -289,7 +287,7 @@ class Gui:
 		FUNCION: buscar(self)
 		ARGS_IN: 
 		DESCRIPCION:
-			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Busqueda
+			Busca de entre la lista de usuarios las coincidencias con lo que esta escrito en el campo Busqueda.
 		ARGS_OUT:
 				-
 		"""
@@ -306,7 +304,8 @@ class Gui:
 				self.app.addListItem("userList", item)
 				self.app.setListItemBg("userList", item, self.listColor)
 
-	
+		
+
 
 	def cambiarFrameVideo(self, frame):
 		"""
@@ -346,13 +345,11 @@ class Gui:
 				-
 		"""
 		users = self.app.getListBox("userList")
-		print("Estas haciendo una llamada1")
 		if users:
 			user = users[0]
 			if user != None:
 				infoUser = self.server.getInfoUsuario(user)
 				ip = infoUser['ip']
-				print("Estas haciendo una llamada2")
 				if self.inCall == True:
 					ret = self.app.okBox("ERROR", "Para llamar a otro usuario necesitas colgar la videollamada actual", parent=None)
 
@@ -414,6 +411,15 @@ class Gui:
 
 
 	def mostrarVideos(self):
+		"""
+		FUNCION: mostrarVideos(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Basicamene. muestra un popUp abierto en el subdirectorio /media que permite elegir los videos.
+			Tambien permite elegir videos de otro directorio.
+		ARGS_OUT:
+			selected = Path hasta el video elegido
+		"""
 
 		path = os.getcwd() + self.videoDir
 		selected = self.app.openBox(title="VideoSelector", dirName=path, fileTypes=[('videos', '*.mp4'), ('videos', '*.mpeg')], asFile=False, parent=None)
@@ -421,6 +427,15 @@ class Gui:
 		return selected
 
 	def enviarVideo(self):
+		"""
+		FUNCION: enviarVideo(self)
+		ARGS_IN: 
+		DESCRIPCION:
+			Funcion analoga a llamar. Realiza todos los procedimientos necesarios para enviar un video.
+		ARGS_OUT:
+			selected = Path hasta el video elegido
+		"""
+
 
 		users = self.app.getListBox("userList")
 		if users:
@@ -510,7 +525,7 @@ class Gui:
 		self.cameraCapture = self.app.addImage("webCamBox", self.webCamBoxImage, 0, 2, rowspan = 10)
 
 		self.app.addLabel("userLabel", "Usuario: {}".format(self.username), 0, 2)
-		self.app.setLabelBg("userLabel", self.listColor)
+		self.app.setLabelBg("userLabel", self.bgColor)
 
 
 		self.app.addButtons(["Actualizar", "Buscar"], self.userButtons, 3, 0)
@@ -519,6 +534,7 @@ class Gui:
 		self.app.addButtons(["Enviar Video"], self.userButtons, 4, 0)
 
 		self.app.addOptionBox("FPS", ["10 FPS", "20 FPS", "30 FPS"], 4, 1)
+		self.app.setOptionBoxBg("FPS", self.listColor)
 
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
@@ -529,7 +545,7 @@ class Gui:
 		# Copypaste, may be useful cuando tengamos que controlar esas cosillas
 		self.app.addStatusbar(fields=3)
 		self.app.setStatusbarBg(self.bgColor)
-		self.app.setStatusbar("FPS=",0)
+		self.app.setStatusbar("FPS =",0)
 		self.app.setStatusbar("No current call",1)
 		self.app.setStatusbar("...",2)
 		
