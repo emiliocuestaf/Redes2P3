@@ -176,7 +176,19 @@ class comunicacionUDP:
 			#    resH = res[1]
 			#    FPS = parRecibidos[3]
 			#    compFrame = parRecibidos[4]
+	
+	def llenarBufferVideo(self, endEvent, pauseEvent):
+
+		while not endEvent.isSet():
 		
+			while not pauseEvent.isSet():
+				self.recepcionFrameVideo()
+				#self.mostrarFrame()
+				if endEvent.isSet():
+					break
+
+		return
+
 
 	def mostrarFrame(self):
 
@@ -219,10 +231,11 @@ class comunicacionUDP:
 		while not endEvent.isSet():
 		
 			while not pauseEvent.isSet():
-				self.recepcionFrameVideo()
+				#self.recepcionFrameVideo()
 				self.mostrarFrame()
 				if endEvent.isSet():
 					break
+
 			while not self.bufferRecepcion.empty():
 				try:
 					self.bufferRecepcion.get(False)
@@ -231,7 +244,7 @@ class comunicacionUDP:
 		
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.videoBoxImage, "r")) 
 		self.gui.cambiarFrameVideo(frame)
-		
+
 		return
 		
 		

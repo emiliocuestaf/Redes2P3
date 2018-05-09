@@ -514,9 +514,9 @@ class Gui:
 
 
 		self.app.addButtons(["Actualizar", "Buscar"], self.userButtons, 3, 0)
-
-		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause", "Enviar Video"], self.userButtons, 3, 1)
-
+		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause"], self.userButtons, 3, 1)
+		
+		self.app.addButtons(["Enviar Video"], self.userButtons, 4, 0)
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
 		self.app.setPollTime(20) 

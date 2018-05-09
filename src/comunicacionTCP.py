@@ -314,18 +314,21 @@ class ComunicacionTCP:
 				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= False)
 				self.endEvent = threading.Event()
 				self.pauseEvent = threading.Event()
+				
 				self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
-				self.videoReceptionThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
+				self.videoReceptionThread = threading.Thread(target= self.udpcom.llenarBufferVideo, args = (self.endEvent, self.pauseEvent))
+				self.videoDisplayingThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
 				self.callTimeThread = threading.Thread(target = self.callTimeCount, args = (self.endEvent, self.pauseEvent))
-
 
 				self.webCamThread.setDaemon(True)
 				self.videoReceptionThread.setDaemon(True)
+				self.videoDisplayingThread.setDaemon(True)
 				self.callTimeThread.setDaemon(True)
 
 				# Iniializacion de los threads
 				self.webCamThread.start()
 				self.videoReceptionThread.start()
+				self.videoDisplayingThread.start()
 				self.callTimeThread.start()
 
 		else:
@@ -434,21 +437,24 @@ class ComunicacionTCP:
 
 			self.endEvent = threading.Event()
 			self.pauseEvent = threading.Event()
-			self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
-			self.videoReceptionThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
-			self.callTimeThread = threading.Thread(target = self.callTimeCount, args = (self.endEvent, self.pauseEvent))
+				
 
+			self.webCamThread = threading.Thread(target = self.udpcom.transmisionWebCam, args = (self.endEvent, self.pauseEvent)) 
+			self.videoReceptionThread = threading.Thread(target= self.udpcom.llenarBufferVideo, args = (self.endEvent, self.pauseEvent))
+			self.videoDisplayingThread = threading.Thread(target = self.udpcom.recepcionWebCam, args = (self.endEvent, self.pauseEvent)) 
+			self.callTimeThread = threading.Thread(target = self.callTimeCount, args = (self.endEvent, self.pauseEvent))
 
 			self.webCamThread.setDaemon(True)
 			self.videoReceptionThread.setDaemon(True)
+			self.videoDisplayingThread.setDaemon(True)
 			self.callTimeThread.setDaemon(True)
-			
+
+			# Iniializacion de los threads
 			self.webCamThread.start()
 			self.videoReceptionThread.start()
+			self.videoDisplayingThread.start()
 			self.callTimeThread.start()
 
-
-		
 
 	def call_denied_handler(self, username):
 		"""
