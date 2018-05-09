@@ -63,7 +63,7 @@ class Gui:
 		ARGS_OUT:
 				-
 		"""
-		self.app = gui("Login Window", "1000x500")
+		self.app = gui("Login Window", "1000x600")
 		self.app.setTitle("Cyder VideoChat")
 		self.app.setIcon(self.logo)
 		self.app.setBg(self.bgColor)
@@ -515,8 +515,11 @@ class Gui:
 
 		self.app.addButtons(["Actualizar", "Buscar"], self.userButtons, 3, 0)
 		self.app.addButtons(["Llamar", "Colgar", "Play", "Pause"], self.userButtons, 3, 1)
-		
+
 		self.app.addButtons(["Enviar Video"], self.userButtons, 4, 0)
+
+		self.app.addOptionBox("FPS", ["10 FPS", "20 FPS", "30 FPS"], 4, 1)
+
 
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
 		self.app.setPollTime(20) 

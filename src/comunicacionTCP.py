@@ -100,20 +100,26 @@ class ComunicacionTCP:
 				-
 		"""
 
+		print(petition)
+
 		self.socketEnvio = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		print(ipDest)
 		print(portDest)
 		try: 
 			self.socketEnvio.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			self.socketEnvio.settimeout(5)
+			print("antesdelconnect")
 			self.socketEnvio.connect((ipDest, int(portDest)))
+			print("despuesdelconnect")
 			self.socketEnvio.settimeout(None)
 		
 		except (OSError, ConnectionRefusedError):
 			self.gui.app.errorBox("ERROR", "No se ha podido establecer una conexion con ese usuario") 
 			return "ERROR"
 
+		print("antesdelsend")
 		self.socketEnvio.send(bytes(petition, 'utf-8'))
+		print("despuesdelsend")
 		self.socketEnvio.close()
 
 	def send_calling(self, ipDest, portDest, username):
@@ -550,7 +556,7 @@ class ComunicacionTCP:
 			text = conn.recv(1024)
 
 			if text: 
-
+				print(text)
 				self.parse_petition(text.decode('utf-8'))
 
 
