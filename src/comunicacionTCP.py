@@ -118,7 +118,7 @@ class ComunicacionTCP:
 			return "ERROR"
 
 		print("antesdelsend")
-		self.socketEnvio.send(bytes(petition, 'utf-8'))
+		self.socketEnvio.send(petition.encode('utf-8'))
 		print("despuesdelsend")
 		self.socketEnvio.close()
 
