@@ -49,6 +49,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Carpetas de compilacion
+__pycache__ 
+
 # Ficheros locales
 *.dat
+
 

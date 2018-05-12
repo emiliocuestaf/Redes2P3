@@ -9,9 +9,10 @@ import signal
 import sys
 import socket
 
-# nuestros ficheros
 import servidorDescubrimiento as SD
 import comunicacionTCP as TCP
+
+
 
 class Gui:
 	"""
@@ -22,12 +23,13 @@ class Gui:
     """
 
 	# Files, definidas asi por defecto. 
-	authenticationFile = "authentication.dat"
-	logo = "logo.gif"
-	videoBoxImage = "callicon.gif"
-	webCamBoxImage = "dandelions.gif"
+	confFile = "./conf/client.conf"
+	authenticationFile = "./conf/authentication.dat"
+	logo = "./gui_images/logo.gif"
+	videoBoxImage = "./gui_images/callicon.gif"
+	webCamBoxImage = "./gui_images/dandelions.gif"
 
-	videoDir = "/media"
+	videoDir = "../media"
 	
 	# Configuracion de colores de la aplicacion. En busqueda de la mejor combinacion...
 	bgColor = "OrangeRed"
@@ -73,7 +75,7 @@ class Gui:
 
 		d = {}
 		try:
-			with open("client.conf", "r") as f:
+			with open(self.confFile, "r") as f:
 				for line in f:
 				    (key, val) = line.split()
 				    d[key] = val
@@ -161,13 +163,13 @@ class Gui:
 		FUNCION: loginFromFile(self)
 		ARGS_IN: 
 		DESCRIPCION:
-			Itenta realizar un login automatico a partir del archivo authentication.dat.
+			Itenta realizar un login automatico a partir del archivo authenticationFile.
 		ARGS_OUT:
 				-
 		"""
 		try:
 			d = {}
-			with open("authentication.dat", "r") as f:
+			with open(self.authenticationFile, "r") as f:
 				# Guardamos todos los valores que haya en el fichero
 				for line in f:
 				    (key, val) = line.split()

@@ -65,7 +65,7 @@ class ComunicacionTCP:
 
 		self.socketRecepcion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.socketRecepcion.bind(('0.0.0.0', int(self.listenPort)))
+		self.socketRecepcion.bind(('', int(self.listenPort)))
 		self.socketRecepcion.listen(self.queueSize)
 		
 		self.server = server.servidorDescubrimiento(serverPort)
