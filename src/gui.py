@@ -537,6 +537,7 @@ class Gui:
 		self.app.setOptionBoxBg("FPS", self.listColor)
 
 
+
 		self.app.addButtons(["Logout"], self.userButtons, 3, 2)
 		self.app.setPollTime(20) 
 		

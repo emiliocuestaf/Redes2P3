@@ -519,6 +519,8 @@ class ComunicacionTCP:
 
 		elif command == "CALL_ACCEPTED":
 
+			print(command)
+
 			self.call_accepted_handler(username= fields[1], destUDPport= fields[2])
 
 		elif command == "CALL_DENIED":
@@ -551,7 +553,7 @@ class ComunicacionTCP:
 			text = conn.recv(1024)
 
 			if text: 
-				print("Recibido " + text)
+				print("Recibido " + text.decode('utf-8'))
 				self.parse_petition(text.decode('utf-8'))
 
 

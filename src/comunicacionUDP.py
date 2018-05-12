@@ -50,7 +50,7 @@ class comunicacionUDP:
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
 
-	def cambiarFPS(valor):
+	def cambiarFPS(self, valor):
 		if int(valor) > 0:
 			self.FPS = int(valor)
 			cadena = "FPS = " + str(self.FPS)
