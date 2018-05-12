@@ -14,7 +14,7 @@ class comunicacionUDP:
 	destIp = 0
 	destPort = 0
 	numOrden = 0
-	FPS = 200
+	FPS = 20
 	compresion = 50
 	resW = 500
 	resH = 400
@@ -24,7 +24,6 @@ class comunicacionUDP:
 	
 	videoPath = None
 
-	cliente = True
 	
 	
 	socketRecepcion = None
@@ -41,10 +40,15 @@ class comunicacionUDP:
 		self.socketRecepcion.settimeout(0.5)
 		self.socketRecepcion.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.socketRecepcion.bind(("0.0.0.0", int(myPort)))
+		# Cogemos los FPS que haya seleccionado el usuario
+		FPS = self.gui.app.getOptionBox("FPS").split(" ")[0]
+		
+		print(str(FPS))
+		
+		self.cambiarFPS(FPS)
+		
 		# Guardamos dos segundos en el buffer
 		self.bufferRecepcion = queue.PriorityQueue(self.FPS*2)
-		cadena = "FPS = " + str(self.FPS)
-		self.gui.app.setStatusbar(cadena,0)
 
 	def cambiarFPS(valor):
 		if int(valor) > 0:
@@ -71,14 +75,21 @@ class comunicacionUDP:
 		
 	# Cliente es un boolean (True si actuamos como cliente, False si como servidor)
 	
-	def configurarSocketEnvio(self, destIp, destPort, cliente):
+	def configurarSocketEnvio(self, destIp, destPort):
 		self.destIp = destIp
 		self.destPort = destPort
-		self.cliente = cliente
  
 		
 	def crearFrameVideo(self):
 		ret, frame = self.cap.read()
+		
+		# Cogemos los FPS que haya seleccionado el usuario
+		FPS = self.gui.app.getOptionBox("FPS").split(" ")[0]
+		if int(FPS) != self.FPS:
+			self.cambiarFPS(FPS)
+		
+		sec_FPS = float(1/self.FPS)*1000 # Pasamos a ms
+		cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
 		if (frame is None) or (ret == False):
 			self.gui.colgar()
 			return None
@@ -111,10 +122,8 @@ class comunicacionUDP:
 		datos = datos + frame
 		self.numOrden += 1
 		# Num maximo de numOrden?? 
-		if self.cliente == True:
-			self.sock.sendto(datos, (self.destIp, int(self.destPort)))
-		else: # Se deberia meter aqui???
-			self.sock.sendto(datos, (self.destIp, int(self.destPort)))
+		self.sock.sendto(datos, (self.destIp, int(self.destPort)))
+
 
 		
 	# Reinicia los parametros para poder realizar otra llamada
@@ -139,33 +148,19 @@ class comunicacionUDP:
 
 	# funcion diseñada para estar en un hilo tol rato
 	def recepcionFrameVideo(self):
-
-		if self.bufferRecepcion.empty():
-			flagFirstEmpty = 1
-		else:
-			flagFirstEmpty = 0
-
-		flag = 1
-
-		while flag == 1:
-							
-			try:
-				mensaje, ip = self.socketRecepcion.recvfrom(204800) #No se que numero poner, pero si le quitas un 0, no cabe
-			except:
-				break
-			
-			if ip[0] != self.destIp:
-				continue
-			
-			split = mensaje.split(b"#")
-			
+	
+		try:
+			mensaje, ip = self.socketRecepcion.recvfrom(204800) #No se que numero poner, pero si le quitas un 0, no cabe
+		except:
+			return
+		if ip[0] != self.destIp:
+			return
+		
+		split = mensaje.split(b"#")
+		
+		# Si el buffer esta lleno, perdemos el frame
+		if not(bufferRecepcion.full()):
 			self.bufferRecepcion.put((int(split[0]), mensaje))
-
-			if flagFirstEmpty == 1:
-				if self.bufferRecepcion.full() == True:
-					flag = 0
-			else:
-				flag = 0
 		
 		return    
 				
@@ -176,23 +171,12 @@ class comunicacionUDP:
 			#    resH = res[1]
 			#    FPS = parRecibidos[3]
 			#    compFrame = parRecibidos[4]
-	
-	def llenarBufferVideo(self, endEvent, pauseEvent):
-
-		while not endEvent.isSet():
-		
-			while not pauseEvent.isSet():
-				self.recepcionFrameVideo()
-				#self.mostrarFrame()
-				if endEvent.isSet():
-					break
-
-		return
 
 
 	def mostrarFrame(self):
 
 		if self.bufferRecepcion.empty():
+			cv2.waitKey(1000) # Si esta vacio esperamos un segundo
 			return
 	
 		mensaje = self.bufferRecepcion.get()[1]
@@ -203,6 +187,7 @@ class comunicacionUDP:
 		res = split[2].split(b"x")
 		resW = int(res[0])
 		resH = int(res[1])
+		FPS = int(split[3])
 		
 	
 		# Descompresión de los datos, una vez recibidos
@@ -222,6 +207,14 @@ class comunicacionUDP:
 		
 		self.gui.cambiarFrameVideo(img_tk)
 		
+		# Ahora comprobamos como esta de lleno el buffer
+		if bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer 
+			sec_FPS = float(1/(0.5*self.FPS))*1000 # Pasamos a ms reduciendo FPS  a la mitad
+			cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
+		else: 
+			sec_FPS = float(1/self.FPS)*1000 # Pasamos a ms reduciendo FPS  a la mitad
+			cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
+		
 	
 		#cuestiones del formato de imagen y demas aqui
 			
@@ -231,7 +224,6 @@ class comunicacionUDP:
 		while not endEvent.isSet():
 		
 			while not pauseEvent.isSet():
-				#self.recepcionFrameVideo()
 				self.mostrarFrame()
 				if endEvent.isSet():
 					break
@@ -247,16 +239,27 @@ class comunicacionUDP:
 
 		return
 		
+			
+	def llenarBufferVideo(self, endEvent, pauseEvent):
+
+		while not endEvent.isSet():
+		
+			while not pauseEvent.isSet():
+				self.recepcionFrameVideo()
+				if endEvent.isSet():
+					break
+
+		return
+		
 		
 		
 	def transmisionWebCam(self, endEvent, pauseEvent):
 
 		if self.videoPath is not None:
 			self.cap = cv2.VideoCapture(self.videoPath)
+			self.cambiarFPS(video.get(cv2.CAP_PROP_FPS))
 		else:
 			self.cap = cv2.VideoCapture(0)
-
-		self.cap.set(cv2.CAP_PROP_FPS, self.FPS)
 		
 		while not endEvent.isSet():
 		
