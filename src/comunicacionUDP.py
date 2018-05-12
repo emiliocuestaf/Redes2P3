@@ -209,10 +209,10 @@ class comunicacionUDP:
 		
 		# Ahora comprobamos como esta de lleno el buffer
 		if self.bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer 
-			sec_FPS = float(1/(0.5*self.FPS))*1000 # Pasamos a ms reduciendo FPS  a la mitad
+			sec_FPS = int(float(1/(0.5*self.FPS))*1000) # Pasamos a ms reduciendo FPS  a la mitad
 			cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
 		else: 
-			sec_FPS = float(1/self.FPS)*1000 # Pasamos a ms reduciendo FPS  a la mitad
+			sec_FPS = int(float(1/self.FPS)*1000) # Pasamos a ms reduciendo FPS  a la mitad
 			cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
 		
 	
