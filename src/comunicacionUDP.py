@@ -159,7 +159,7 @@ class comunicacionUDP:
 		split = mensaje.split(b"#")
 		
 		# Si el buffer esta lleno, perdemos el frame
-		if not(bufferRecepcion.full()):
+		if not(self.bufferRecepcion.full()):
 			self.bufferRecepcion.put((int(split[0]), mensaje))
 		
 		return    
@@ -208,7 +208,7 @@ class comunicacionUDP:
 		self.gui.cambiarFrameVideo(img_tk)
 		
 		# Ahora comprobamos como esta de lleno el buffer
-		if bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer 
+		if self.bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer 
 			sec_FPS = float(1/(0.5*self.FPS))*1000 # Pasamos a ms reduciendo FPS  a la mitad
 			cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
 		else: 
