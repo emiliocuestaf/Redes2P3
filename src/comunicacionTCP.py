@@ -314,7 +314,7 @@ class ComunicacionTCP:
 
 				self.gui.inCall = True
 				self.udpcom = UDP.comunicacionUDP( self.gui, self.publicIP, self.myUDPport)
-				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= False)
+				self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport)
 				self.endEvent = threading.Event()
 				self.pauseEvent = threading.Event()
 				
@@ -425,7 +425,7 @@ class ComunicacionTCP:
 			self.peerCommandPort = userInfo['listenPort']
 
 			self.udpcom = UDP.comunicacionUDP(self.gui, self.publicIP, self.myUDPport)
-			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport, cliente= True)
+			self.udpcom.configurarSocketEnvio(destIp= userInfo['ip'] , destPort= destUDPport)
 
 			if self.waitingVideoAssertion == 0:
 
