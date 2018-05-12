@@ -88,7 +88,7 @@ class comunicacionUDP:
 		if int(FPS) != self.FPS:
 			self.cambiarFPS(FPS)
 		
-		sec_FPS = float(1/self.FPS)*1000 # Pasamos a ms
+		sec_FPS = int(float(1/self.FPS)*1000) # Pasamos a ms
 		cv2.waitKey(sec_FPS) #Con esto ajustamos FPS
 		if (frame is None) or (ret == False):
 			self.gui.colgar()
