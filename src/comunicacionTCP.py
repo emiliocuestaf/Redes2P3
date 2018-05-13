@@ -104,7 +104,7 @@ class ComunicacionTCP:
 		
 		try: 
 			self.socketEnvio.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			self.socketEnvio.settimeout(5)
+			self.socketEnvio.settimeout(10)
 			self.socketEnvio.connect((ipDest, int(portDest)))
 			self.socketEnvio.settimeout(None)
 		
