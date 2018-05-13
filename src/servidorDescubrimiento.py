@@ -28,6 +28,8 @@ class servidorDescubrimiento:
 
 	# Nombre (direccion) del servidor
 	nombreSevidor = "vega.ii.uam.es"
+	authenticationFile = "./conf/authentication.dat"
+
 		
 	# Construction, basic 
 	def __init__(self, portSD):
@@ -57,7 +59,7 @@ class servidorDescubrimiento:
 			return None
 		try:
 			socketCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			self.socketEnvio.settimeout(5)
+			socketCliente.settimeout(5)
 			socketCliente.connect((self.nombreSevidor,int(self.portSD)))
 		except (OSError, ConnectionRefusedError):
 			return None
@@ -129,7 +131,7 @@ class servidorDescubrimiento:
 
 			# Guardamos los datos
 
-			with open("authentication.dat", "w") as f:
+			with open(self.authenticationFile, "w") as f:
 				f.write('username '+ username+'\n')
 				f.write('pwd '+ pwd + '\n')
 
