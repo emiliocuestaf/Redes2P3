@@ -39,7 +39,7 @@ class Gui:
 	videoBoxImage = "./gui_images/callicon.gif"
 	webCamBoxImage = "./gui_images/dandelions.gif"
 
-	videoDir = "../media"
+	videoDir = "/media"
 	
 	# Configuracion de colores de la aplicacion. En busqueda de la mejor combinacion...
 	bgColor = "OrangeRed"
@@ -249,7 +249,9 @@ class Gui:
 		os.remove(self.authenticationFile)
 		
 		if self.inCall == True:
-			self.colgar()
+
+			ret = self.app.errorBox("Error en logout", "No puedes salir de la aplicacion mientras estas en llamada")
+			return			
 
 		self.setLoginLayout()
 
