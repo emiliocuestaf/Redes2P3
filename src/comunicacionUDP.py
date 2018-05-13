@@ -1,4 +1,4 @@
-########
+ººº########
 # REDES 2 - PRACTICA 3
 # FICHERO: comunicacionUDP.py
 # DESCRIPCION: Fichero que define las funciones de comunicacion sobre UDP (transmision de video)
@@ -176,10 +176,10 @@ class comunicacionUDP:
 		# Cogemos los FPS que haya seleccionado el usuario
 		FPS = self.gui.app.getOptionBox("FPS").split(" ")[0]
 
-
-		# Si han sido cambiados por el usuario, se lo notificamos a nuestro programa
-		if int(FPS) != self.FPS:
-			self.cambiarFPS(FPS)
+		if self.videoPath is None:
+			# Si han sido cambiados por el usuario, se lo notificamos a nuestro programa
+			if int(FPS) != self.FPS:
+				self.cambiarFPS(FPS)
 		
 		# Calculamos los ms necesarios entre frame y frame para que se cumplan los FPS prometidos
 		sec_FPS = int(float(1/self.FPS)*1000) # tiempo = (1/fps) * 1000 (para que sean ms)
