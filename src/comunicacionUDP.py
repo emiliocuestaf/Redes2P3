@@ -242,7 +242,7 @@ class comunicacionUDP:
 		if self.videoPath is not None:
 			# Abrimos el fichero de video y ajustamos los fps (usando los originales del video)
 			self.cap = cv2.VideoCapture(self.videoPath)
-			self.cambiarFPS(self.cap.get(cv2.CAP_PROP_FPS))
+			self.cambiarFPS(video.get(cv2.CAP_PROP_FPS))
 		else:
 			# Abrimos webcam
 			self.cap = cv2.VideoCapture(0)
@@ -360,7 +360,7 @@ class comunicacionUDP:
 				-
 		"""	
 		if self.bufferRecepcion.empty():
-			cv2.waitKey(1000) # Si el buffer esta vacio esperamos un segundo a que se llene un minimo
+			time.sleep(2) # Si el buffer esta vacio esperamos un segundo y medio a que se llene un minimo
 			return
 
 		mensaje = self.bufferRecepcion.get()[1]
@@ -398,9 +398,11 @@ class comunicacionUDP:
 		if self.bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer (reducimos los fps a la mitad)
 			sec_FPS = int(float(1/(0.5*self.FPS))*1000) # tiempo = (1/(0.5*fps)) * 1000 (para que sean ms)
 			cv2.waitKey(sec_FPS) # Reducimos los fps a la mitad para que el buffer se recupere
+			print(" Tamos por debajo del 50%")
 		else: 
 			sec_FPS = int(float(1/self.FPS)*1000) # tiempo = (1/fps) * 1000 (para que sean ms)
 			cv2.waitKey(sec_FPS)
+			print("Tamos por encima del 50%")
 			
 	def recepcionWebCam(self, endEvent, pauseEvent):
 		"""
