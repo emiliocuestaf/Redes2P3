@@ -255,7 +255,6 @@ class comunicacionUDP:
 		# Antes de cerrar el hilo, quitamos nuestra imagen de la gui y cerramos todo lo necesario
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.webCamBoxImage, "r")) 
 		self.gui.cambiarFrameWebCam(frame)
-		self.pararTransmision()
 		return
 		
 	def pararTransmision(self):
@@ -429,5 +428,6 @@ class comunicacionUDP:
 		# Antes de cerrar el hilo, quitamos la imagen del otro usuario de la gui
 		frame =  ImageTk.PhotoImage(Image.open(self.gui.videoBoxImage, "r")) 
 		self.gui.cambiarFrameVideo(frame)
+		self.pararTransmision()
 
 		return
