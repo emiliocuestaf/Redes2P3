@@ -182,10 +182,9 @@ class comunicacionUDP:
 				self.cambiarFPS(FPS)
 		
 		# Calculamos los ms necesarios entre frame y frame para que se cumplan los FPS prometidos
-		sec_FPS = float(1/self.FPS) # tiempo = (1/fps) * 1000 (para que sean ms)
+		sec_FPS = float(1/self.FPS) # tiempo = (1/fps) (en segundos)
 		# Esperamos dicho intervalo de tiempo
 		time.sleep(sec_FPS)
-		#cv2.waitKey(sec_FPS)
 			
 		# Cambiamos la resolucion del frame, uno para que se adecue a nuestra gui como emisores y otro para el que va a recibir el video
 		frameRes = cv2.resize(frame, (200,300))
@@ -361,7 +360,7 @@ class comunicacionUDP:
 				-
 		"""	
 		if self.bufferRecepcion.empty():
-			time.sleep(2) # Si el buffer esta vacio esperamos un segundo y medio a que se llene un minimo
+			time.sleep(2) # Si el buffer esta vacio esperamos dos segundos a que se llene un minimo
 			return
 
 		mensaje = self.bufferRecepcion.get()[1]
@@ -397,15 +396,10 @@ class comunicacionUDP:
 		
 		# Ahora comprobamos como esta de lleno el buffer y calculamos los ms necesarios entre frame y frame para que se cumplan los FPS
 		if self.bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer (reducimos los fps a la mitad)
-			sec_FPS = float(1/(0.5*self.FPS)) # tiempo = (1/(0.5*fps)) * 1000 (para que sean ms)
-			#cv2.waitKey(sec_FPS) # Reducimos los fps a la mitad para que el buffer se recupere
+			sec_FPS = float(1/(0.5*FPS)) # tiempo = (1/(0.5*fps)) (en segundos)
 			time.sleep(sec_FPS)
-			print(" Tamos por debajo del 50%")
 		else: 
-			sec_FPS = float(1/self.FPS) # tiempo = (1/fps) * 1000 (para que sean ms)
-			time.sleep(sec_FPS)
-			#cv2.waitKey(sec_FPS)
-			print("Tamos por encima del 50%")
+			sec_FPS = float(1/FPS) # tiempo = (1/fps) (en segundos)
 			
 	def recepcionWebCam(self, endEvent, pauseEvent):
 		"""
