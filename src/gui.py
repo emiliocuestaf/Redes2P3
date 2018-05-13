@@ -545,7 +545,7 @@ class Gui:
 
 		self.app.addButtons(["Enviar Video"], self.userButtons, 4, 0)
 
-		self.app.addOptionBox("FPS", ["10 FPS", "20 FPS", "30 FPS"], 4, 1)
+		self.app.addOptionBox("FPS", ["15 FPS", "20 FPS", "30 FPS", "40 FPS", "50 FPS"], 4, 1)
 		self.app.setOptionBoxBg("FPS", self.listColor)
 
 
