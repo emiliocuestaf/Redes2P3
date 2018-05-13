@@ -1,3 +1,12 @@
+########
+# REDES 2 - PRACTICA 3
+# FICHERO: video_client.py
+# DESCRIPCION: Fichero principal para ejecutar la aplicacion 
+# AUTORES: 
+#	* Luis Carabe Fernandez-Pedraza 
+#	* Emilio Cuesta Fernandez
+# LAST-MODIFIED: 01-05-2018
+########
 
 import sys
 

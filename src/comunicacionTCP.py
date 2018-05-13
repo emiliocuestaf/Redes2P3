@@ -1,3 +1,14 @@
+########
+# REDES 2 - PRACTICA 3
+# FICHERO: comunicacionTCP.py
+# DESCRIPCION: Fichero que define las funciones de comunicacion sobre TCP (transmision de comandos)
+# AUTORES: 
+#	* Luis Carabe Fernandez-Pedraza 
+#	* Emilio Cuesta Fernandez
+# LAST-MODIFIED: 12-05-2018
+########
+
+
 import cv2
 import socket
 import time

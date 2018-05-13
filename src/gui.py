@@ -1,3 +1,13 @@
+########
+# REDES 2 - PRACTICA 3
+# FICHERO: gui.py
+# DESCRIPCION: Fichero que define las funciones necesarias para la interfaz grafica
+# AUTORES: 
+#	* Luis Carabe Fernandez-Pedraza 
+#	* Emilio Cuesta Fernandez
+# LAST-MODIFIED: 9-05-2018
+########
+
 from appJar import gui
 from PIL import Image, ImageTk
 
