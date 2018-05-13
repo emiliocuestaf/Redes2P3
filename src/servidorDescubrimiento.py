@@ -28,6 +28,7 @@ class servidorDescubrimiento:
 
 	# Nombre (direccion) del servidor
 	nombreSevidor = "vega.ii.uam.es"
+	# Direccion para el fichero de autentificacion
 	authenticationFile = "./conf/authentication.dat"
 
 		
