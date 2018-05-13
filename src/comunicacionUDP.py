@@ -83,9 +83,6 @@ class comunicacionUDP:
 
 		# Cogemos los FPS que haya seleccionado el usuario
 		FPS = self.gui.app.getOptionBox("FPS").split(" ")[0]
-		
-		print(str(FPS)) # QUITAME CUANDO PUEDAS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		
 		self.cambiarFPS(FPS)
 		
 		# Creamos un buffer que pueda guardar dos segundos de video (priorityQueu, ordena los frames segun el numOrden)
@@ -307,16 +304,13 @@ class comunicacionUDP:
 
 		# Recibimos del socket
 		try:
-			mensaje, ip = self.socketRecepcion.recvfrom(204800)
+			mensaje, ip = self.socketRecepcion.recvfrom(80000)
 		except:
 			return # Si salta el timeout, salimos
 
 		# Comprobamos que el paquete recibido sea de quien esperamos
 		if ip[0] != self.destIp:
 			return
-
-		print(" MI MADRE EL BIXO CUANTO OCUPAMOS?") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		print(ip) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 		# Separamos las cabeceras (split[0] = numOrden)
 		split = mensaje.split(b"#")
