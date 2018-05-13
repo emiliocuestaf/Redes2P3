@@ -1,4 +1,4 @@
-ººº########
+########
 # REDES 2 - PRACTICA 3
 # FICHERO: comunicacionUDP.py
 # DESCRIPCION: Fichero que define las funciones de comunicacion sobre UDP (transmision de video)
