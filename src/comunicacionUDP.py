@@ -245,7 +245,7 @@ class comunicacionUDP:
 		if self.videoPath is not None:
 			# Abrimos el fichero de video y ajustamos los fps (usando los originales del video)
 			self.cap = cv2.VideoCapture(self.videoPath)
-			self.cambiarFPS(video.get(cv2.CAP_PROP_FPS))
+			self.cambiarFPS(self.cap.get(cv2.CAP_PROP_FPS))
 		else:
 			# Abrimos webcam
 			self.cap = cv2.VideoCapture(0)
