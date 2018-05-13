@@ -104,15 +104,12 @@ class comunicacionUDP:
 		ARGS_IN: 
 				* valor: numero de FPS
 		DESCRIPCION:
-				Cambia el parametro de clase FPS (self.FPS) y actualiza la interfaz
+				Cambia el parametro de clase FPS (self.FPS)
 		ARGS_OUT:
 				-
 		"""
 		if int(valor) > 0:
 			self.FPS = int(valor)
-			# Actualizamos la gui
-			cadena = "FPS = " + str(self.FPS)
-			self.gui.app.setStatusbar(cadena,0)
 		
 	
 	def cambiarEnviarVideo(self, rutaVideo, hayVideo):
@@ -172,11 +169,9 @@ class comunicacionUDP:
 			self.gui.colgar()
 			return None
 
-
-		# Cogemos los FPS que haya seleccionado el usuario
-		FPS = self.gui.app.getOptionBox("FPS").split(" ")[0]
-
 		if self.videoPath is None:
+			# Cogemos los FPS que haya seleccionado el usuario (en caso de video local, los fps estan fijos)
+			FPS = self.gui.app.getOptionBox("FPS").split(" ")[0]
 			# Si han sido cambiados por el usuario, se lo notificamos a nuestro programa
 			if int(FPS) != self.FPS:
 				self.cambiarFPS(FPS)
@@ -398,8 +393,14 @@ class comunicacionUDP:
 		if self.bufferRecepcion.qsize() < (self.FPS): # Menos del 50% del buffer (reducimos los fps a la mitad)
 			sec_FPS = float(1/(0.5*FPS)) # tiempo = (1/(0.5*fps)) (en segundos)
 			time.sleep(sec_FPS)
+			# Actualizamos la gui
+			cadena = "FPS = " + str(FPS*0.5)
+			self.gui.app.setStatusbar(cadena,0)
 		else: 
 			sec_FPS = float(1/FPS) # tiempo = (1/fps) (en segundos)
+			# Actualizamos la gui
+			cadena = "FPS = " + str(FPS)
+			self.gui.app.setStatusbar(cadena,0)
 			
 	def recepcionWebCam(self, endEvent, pauseEvent):
 		"""
