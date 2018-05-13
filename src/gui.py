@@ -220,8 +220,8 @@ class Gui:
 		username = self.app.getEntry("Usuario:   ")
 		pwd = self.app.getEntry("Contraseña:   ")
 
-		if username.count('#') != 0 :
-			self.app.errorBox("Error en login", "Su usuario no puede contener '#' ni otros caracetres extraños")
+		if username.count('#') != 0 or username.count(' ') != 0:
+			self.app.errorBox("Error en login", "Su usuario no puede contener '#', espacios u otros caracetres extraños")
 			self.app.setEntry("Usuario:   ", "", callFunction=False)
 			self.app.setEntry("Contraseña:   ", "", callFunction=False)
 			return 
@@ -545,7 +545,7 @@ class Gui:
 
 		self.app.addButtons(["Enviar Video"], self.userButtons, 4, 0)
 
-		self.app.addOptionBox("FPS", ["15 FPS", "20 FPS", "30 FPS", "40 FPS", "50 FPS"], 4, 1)
+		self.app.addOptionBox("FPS", ["15 FPS", "20 FPS", "30 FPS", "40 FPS"], 4, 1)
 		self.app.setOptionBoxBg("FPS", self.listColor)
 
 
